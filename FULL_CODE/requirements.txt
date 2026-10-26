@@ -1,0 +1,6 @@
+# Pinned dependencies for VoicePulse AI (TalentAP Mega Hackathon 2026 - R5)
+streamlit==1.66.0
+pandas==3.0.1
+scikit-learn==1.8.0
+numpy==2.4.3
+pytest==9.1.1

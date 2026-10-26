@@ -1,0 +1,11 @@
+record_id,store_id,date,channel,region,transactions,text
+R001,S-101,2026-10-05,online_review,South,1500,"The freezer is broken and ice cream melted"
+R002,S-101,2026-10-06,staff_note,South,1500,"freezer not cold again in dairy section"
+R003,S-101,2026-10-12,call_centre,South,1520,"Freezer is not working, products are warm"
+R004,S-101,2026-10-13,app_comment,South,1520,"allergen label is wrong on snack pack"
+R005,S-102,2026-10-06,online_review,South,3200,"Billing counter very slow and long queue"
+R006,S-102,2026-10-13,staff_note,South,3200,"cashier was rude and shouted at customer"
+R007,S-103,2026-10-12,app_comment,West,900,"App checkout payment failed"
+R008,S-104,2026-10-13,online_review,West,1200,"Store was clean and staff helpful"
+R009,S-101,2026-10-13,staff_note,South,1520,"allergen label wrong on snack pack"
+R010,S-101,2026-10-13,call_centre,South,1520,"same allergen label is incorrect on snack pack"
