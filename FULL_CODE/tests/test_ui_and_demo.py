@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 from engine import VoicePulseClassifier, build_regional_weekly_brief
-from styles import render_header, render_jury_banner, render_section_banner, render_empty_state
+from styles import render_header, render_jury_banner, render_section_banner, render_empty_state, render_dashboard_preview
 
 
 class TestUIAndDemo(unittest.TestCase):
@@ -36,6 +36,12 @@ class TestUIAndDemo(unittest.TestCase):
 
         empty = render_empty_state("No Match", "Try again", "🔍")
         self.assertIn("No Match", empty)
+
+    def test_render_dashboard_preview(self):
+        preview = render_dashboard_preview()
+        self.assertIn("apple-mockup-frame", preview)
+        self.assertIn("39,769", preview)
+        self.assertIn("+2 Wks Early Lead", preview)
 
     def test_classifier_predict_detailed(self):
         clf = VoicePulseClassifier()

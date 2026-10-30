@@ -34,6 +34,7 @@ APPLE_CSS = """
   --apple-radius-sm: 8px;
   --apple-radius-md: 12px;
   --apple-radius-lg: 16px;
+  --apple-radius-xl: 20px;
   --apple-radius-pill: 980px;
   --apple-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
   --apple-shadow-hover: 0 6px 18px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
@@ -399,6 +400,251 @@ p, span, label, div {
   box-shadow: var(--apple-shadow-card);
 }
 
+/* =====================================================================
+   Landing Page Design System Components
+   ===================================================================== */
+.apple-hero-container {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8F9FD 100%);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--apple-radius-xl);
+  padding: 36px 36px 32px 36px;
+  margin-bottom: 26px;
+  box-shadow: var(--apple-shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.apple-hero-container::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(0, 113, 227, 0.06) 0%, rgba(88, 86, 214, 0.02) 70%, transparent 100%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.apple-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-radius: var(--apple-radius-pill);
+  background: var(--apple-blue-soft);
+  border: 1px solid var(--apple-blue-border);
+  color: var(--apple-blue);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.apple-hero-headline {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: var(--apple-text-primary);
+  line-height: 1.15;
+  margin-bottom: 16px;
+}
+
+.apple-hero-description {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--apple-text-secondary);
+  max-width: 620px;
+  margin-bottom: 24px;
+}
+
+.apple-trust-grid {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--apple-border-subtle);
+}
+
+.apple-trust-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--apple-surface);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--apple-radius-sm);
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.apple-trust-chip strong {
+  color: var(--apple-text-primary);
+}
+
+/* Dashboard Mockup Preview Window */
+.apple-mockup-frame {
+  background: var(--apple-surface);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--apple-radius-lg);
+  box-shadow: var(--apple-shadow-float);
+  overflow: hidden;
+  position: relative;
+}
+
+.apple-mockup-titlebar {
+  background: #F8F8FA;
+  border-bottom: 1px solid var(--apple-border);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.apple-mockup-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.apple-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.apple-dot-red { background-color: #FF5F56; }
+.apple-dot-yellow { background-color: #FFBD2E; }
+.apple-dot-green { background-color: #27C93F; }
+
+.apple-mockup-url {
+  background: #FFFFFF;
+  border: 1px solid var(--apple-border);
+  border-radius: 6px;
+  padding: 3px 12px;
+  font-size: 11px;
+  color: var(--apple-text-secondary);
+  flex: 1;
+  text-align: center;
+}
+
+.apple-mockup-body {
+  padding: 18px 20px;
+}
+
+.apple-mini-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.apple-mini-stat {
+  background: var(--apple-surface-muted);
+  border: 1px solid var(--apple-border-subtle);
+  border-radius: var(--apple-radius-sm);
+  padding: 10px 12px;
+}
+
+.apple-mini-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--apple-text-secondary);
+  letter-spacing: 0.03em;
+}
+
+.apple-mini-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--apple-text-primary);
+  margin-top: 2px;
+}
+
+/* Feature Cards Grid */
+.apple-feature-card {
+  background: var(--apple-surface);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--apple-radius-md);
+  padding: 22px 24px;
+  height: 100%;
+  box-shadow: var(--apple-shadow-card);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.apple-feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--apple-shadow-hover);
+}
+
+.apple-feature-icon-wrapper {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 14px;
+}
+
+.apple-feature-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--apple-text-primary);
+  margin-bottom: 6px;
+}
+
+.apple-feature-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--apple-text-secondary);
+}
+
+/* How It Works Steps */
+.apple-step-card {
+  background: var(--apple-surface);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--apple-radius-md);
+  padding: 18px 20px;
+  height: 100%;
+  box-shadow: var(--apple-shadow-card);
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.apple-step-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--apple-shadow-hover);
+}
+
+.apple-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--apple-blue);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+/* Jury Demo CTA Card */
+.apple-jury-cta-card {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F5F8FF 100%);
+  border: 1px solid var(--apple-blue-border);
+  border-radius: var(--apple-radius-xl);
+  padding: 32px 36px;
+  box-shadow: 0 8px 24px rgba(0, 113, 227, 0.08);
+  margin: 32px 0 16px 0;
+}
+
 /* Jury Demo Navigator */
 .apple-jury-banner {
   background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FE 100%);
@@ -588,6 +834,70 @@ def render_section_banner(title: str, subtitle: str, badge_text: str | None = No
         </div>
       </div>
       {badge_html}
+    </div>
+    """
+
+
+def render_dashboard_preview():
+    """Render a crisp, Apple-styled desktop preview frame of the VoicePulse AI product."""
+    return """
+    <div class="apple-mockup-frame">
+      <div class="apple-mockup-titlebar">
+        <div class="apple-mockup-dots">
+          <div class="apple-dot apple-dot-red"></div>
+          <div class="apple-dot apple-dot-yellow"></div>
+          <div class="apple-dot apple-dot-green"></div>
+        </div>
+        <div class="apple-mockup-url">voicepulse.saffron.internal/live-radar</div>
+        <span class="apple-badge apple-badge-green" style="font-size: 10px; padding: 2px 7px;">● Live Stream</span>
+      </div>
+      <div class="apple-mockup-body">
+        <div class="apple-mini-stats">
+          <div class="apple-mini-stat">
+            <div class="apple-mini-stat-label">Ingested Chatter</div>
+            <div class="apple-mini-stat-value">39,769</div>
+            <div style="font-size: 10px; color: var(--apple-text-secondary); margin-top: 2px;">26 Continuous Weeks</div>
+          </div>
+          <div class="apple-mini-stat">
+            <div class="apple-mini-stat-label">Actionable Proportion</div>
+            <div class="apple-mini-stat-value" style="color: var(--apple-blue);">60.4%</div>
+            <div style="font-size: 10px; color: var(--apple-text-secondary); margin-top: 2px;">24,028 Routed to Ops</div>
+          </div>
+          <div class="apple-mini-stat">
+            <div class="apple-mini-stat-label">Statutory Floor Floors</div>
+            <div class="apple-mini-stat-value" style="color: var(--apple-red);">5,972</div>
+            <div style="font-size: 10px; color: var(--apple-text-secondary); margin-top: 2px;">Food Safety Escalated</div>
+          </div>
+          <div class="apple-mini-stat">
+            <div class="apple-mini-stat-label">Duplicate Clusters</div>
+            <div class="apple-mini-stat-value" style="color: var(--apple-amber);">1,288</div>
+            <div style="font-size: 10px; color: var(--apple-text-secondary); margin-top: 2px;">Same-Day Store Clustered</div>
+          </div>
+        </div>
+        
+        <!-- Mockup Alert Card -->
+        <div style="background: #FFFBFB; border: 1px solid rgba(255, 59, 48, 0.22); border-left: 3px solid var(--apple-red); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px;">
+            <span class="apple-badge apple-badge-red" style="font-size: 9px; padding: 2px 6px;">CRITICAL RADAR ALERT</span>
+            <span style="font-weight: 600; color: var(--apple-text-primary);">Store ST-001 (Kothrud)</span>
+            <span style="color: var(--apple-blue); font-weight: 600;">+2 Wks Early Lead</span>
+          </div>
+          <div style="font-size: 12px; font-weight: 600; color: var(--apple-text-primary); margin-top: 4px;">
+            IT17 · Foreign Object / Contamination in Product
+          </div>
+          <div style="font-size: 11px; font-style: italic; color: var(--apple-text-secondary); margin-top: 4px; background: rgba(0,0,0,0.02); padding: 4px 8px; border-radius: 4px;">
+            “Found small white worms inside the sealed basmati rice packet bought from aisle 2...”
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 10px; color: var(--apple-text-secondary);">
+            <span>Owner: Quality & Compliance</span>
+            <span>Confidence: 78.4%</span>
+          </div>
+        </div>
+
+        <div style="text-align: right; font-size: 11px; color: var(--apple-blue); font-weight: 600;">
+          Live Operational Sandbox Active ➔
+        </div>
+      </div>
     </div>
     """
 

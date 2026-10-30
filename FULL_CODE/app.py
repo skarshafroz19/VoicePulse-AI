@@ -25,6 +25,7 @@ from engine import (
 )
 from styles import (
     APPLE_CSS,
+    render_dashboard_preview,
     render_empty_state,
     render_header,
     render_jury_banner,
@@ -79,6 +80,8 @@ if "jury_demo_mode" not in st.session_state:
     st.session_state.jury_demo_mode = False
 if "jury_demo_step" not in st.session_state:
     st.session_state.jury_demo_step = 1
+if "nav_choice" not in st.session_state:
+    st.session_state.nav_choice = "Product Overview"
 if "live_analysis_text" not in st.session_state:
     st.session_state.live_analysis_text = ""
 if "live_analysis_channel" not in st.session_state:
@@ -116,6 +119,7 @@ with st.sidebar:
     st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
     st.markdown("### Navigation")
     nav_sections = [
+        "Product Overview",
         "Executive Overview",
         "Live AI Analysis",
         "Data Explorer",
@@ -125,12 +129,16 @@ with st.sidebar:
         "Reports & Deliverables",
         "Complete Unified View"
     ]
+
+    # Sync radio with session state
+    nav_index = nav_sections.index(st.session_state.nav_choice) if st.session_state.nav_choice in nav_sections else 0
     selected_nav = st.radio(
         "Navigate Dashboard",
         nav_sections,
-        index=0,
+        index=nav_index,
         label_visibility="collapsed"
     )
+    st.session_state.nav_choice = selected_nav
 
     st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
     st.markdown("### Active Data Stream")
@@ -538,8 +546,205 @@ if st.session_state.jury_demo_mode:
 # 8. Standard Dashboard Views
 # -----------------------------------------------------------------------------
 
+# --- VIEW 0: PRODUCT OVERVIEW (LANDING PAGE) ---
+if selected_nav == "Product Overview":
+    # Hero Section
+    st.markdown("""
+    <div class="apple-hero-container">
+        <div class="apple-hero-eyebrow">
+            TalentAP Mega Hackathon 2026 · Retail Track R5
+        </div>
+        <div class="apple-hero-headline">
+            Turn Every Store Conversation<br>Into Operational Action.
+        </div>
+        <div class="apple-hero-description">
+            VoicePulse AI ingests 40,000 raw, multilingual customer chatter records across in-store kiosks, WhatsApp, Google reviews, and staff notes.
+            Using a neural-symbolic classifier with statutory safety floors, it routes actionable tickets to department owners and detects emerging store-level outbreaks 2–3 weeks ahead of batch review.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Hero Action Buttons & Trust Indicators
+    h_col1, h_col2, h_col3 = st.columns([1.2, 1.2, 2.6])
+    with h_col1:
+        if st.button("Start Guided Jury Demo", type="primary", use_container_width=True, key="hero_start_demo"):
+            st.session_state.jury_demo_mode = True
+            st.session_state.jury_demo_step = 1
+            st.rerun()
+    with h_col2:
+        if st.button("Explore Dashboard →", type="secondary", use_container_width=True, key="hero_explore_dash"):
+            st.session_state.nav_choice = "Executive Overview"
+            st.rerun()
+
+    st.markdown("""
+    <div class="apple-trust-grid" style="margin-top: 16px; margin-bottom: 28px;">
+        <div class="apple-trust-chip"><span>📡</span> <strong>39,769</strong> Ingested Live Records</div>
+        <div class="apple-trust-chip"><span>⚡</span> <strong>+2 Weeks</strong> Early Warning Lead Advantage</div>
+        <div class="apple-trust-chip"><span>🎯</span> <strong>0.8641</strong> Official Evaluation Benchmark</div>
+        <div class="apple-trust-chip"><span>🛡️</span> <strong>100%</strong> Valid Contemporaneous Evidence</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Two-Column Layout: Desktop Dashboard Preview & Live Stream Highlights
+    st.markdown("### Interactive Dashboard Preview")
+    st.caption("A high-fidelity representation of the live operational dashboard running on active Saffron Retail stream data.")
+
+    prev_c1, prev_c2 = st.columns([1.4, 1.0], gap="large")
+    with prev_c1:
+        st.markdown(render_dashboard_preview(), unsafe_allow_html=True)
+        st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+        if st.button("Launch Interactive AI Analysis Sandbox ➔", use_container_width=True, key="hero_sandbox_btn"):
+            st.session_state.nav_choice = "Live AI Analysis"
+            st.rerun()
+
+    with prev_c2:
+        with st.container(border=True):
+            st.markdown("#### Live Operational Pulse")
+            st.metric("Total Ingested Chatter", f"{total_records:,}", "26 Weeks Live Stream")
+            act_share = (actionable_count / max(1, total_records) * 100) if total_records > 0 else 0.0
+            st.metric("Actionable Tickets", f"{actionable_count:,}", f"{act_share:.1f}% Routed to Owners")
+            st.metric("Statutory Safety Incidents", f"{high_critical_count:,}", "Immediate Floor Escalations")
+            st.metric("Cross-Channel Duplicates", f"{duplicate_count:,}", "Same-Day Store Clustered")
+
+    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+
+    # 4 Feature Cards
+    st.markdown("### Core Capabilities Built for Enterprise Scale")
+    st.caption("Designed according to Apple Human Interface Guidelines: clarity, consistency, and restrained elegance.")
+
+    feat_c1, feat_c2 = st.columns(2)
+    with feat_c1:
+        st.markdown("""
+        <div class="apple-feature-card">
+            <div class="apple-feature-icon-wrapper" style="background: rgba(0, 113, 227, 0.08); color: var(--apple-blue);">
+                🌐
+            </div>
+            <div class="apple-feature-title">Multilingual Frontline Triage & Categorization</div>
+            <div class="apple-feature-desc">
+                Hybrid Word (1-2) + Subword Char (3-5) TF-IDF parser normalizing code-mixed Hindi, Marathi, and WhatsApp vernacular without losing context across 31 retail taxonomy classes.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="apple-feature-card">
+            <div class="apple-feature-icon-wrapper" style="background: rgba(255, 59, 48, 0.08); color: var(--apple-red);">
+                ⚖️
+            </div>
+            <div class="apple-feature-title">Statutory Policy-First Safety Floors</div>
+            <div class="apple-feature-desc">
+                Mandatory legal compliance overrides automatically elevating life safety, food contamination (<code>IT17</code>), hygiene (<code>IT06</code>), and cold-chain breakdowns (<code>IT10</code>) to Critical/High.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with feat_c2:
+        st.markdown("""
+        <div class="apple-feature-card">
+            <div class="apple-feature-icon-wrapper" style="background: rgba(88, 86, 214, 0.08); color: var(--apple-indigo);">
+                📡
+            </div>
+            <div class="apple-feature-title">Causal Emerging Incident Radar</div>
+            <div class="apple-feature-desc">
+                Rolling 8-week exposure-normalized z-score surge detection flagging store micro-trends +2 weeks ahead of conventional reviews without monopoly flooding (under ≤ 5.0 weekly flag budget).
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="apple-feature-card">
+            <div class="apple-feature-icon-wrapper" style="background: rgba(52, 199, 89, 0.08); color: var(--apple-green);">
+                📋
+            </div>
+            <div class="apple-feature-title">Automated Regional Action Briefs</div>
+            <div class="apple-feature-desc">
+                Weekly one-page operational synthesis for territorial leadership detailing top 5 issues, volume shifts, affected store IDs, and verbatim frontline evidence quotes.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+
+    # How It Works (4-Step Workflow)
+    st.markdown("### How VoicePulse AI Works")
+    st.caption("A continuous, closed-loop pipeline turning raw unstructured store chatter into verified operational action.")
+
+    w1, w2, w3, w4 = st.columns(4)
+    with w1:
+        st.markdown("""
+        <div class="apple-step-card">
+            <div class="apple-step-badge">1</div>
+            <div style="font-weight: 600; font-size: 14px; color: var(--apple-text-primary); margin-bottom: 6px;">Multi-Channel Ingest</div>
+            <div style="font-size: 12px; color: var(--apple-text-secondary); line-height: 1.45;">
+                Continuous chatter streams from in-store kiosks, WhatsApp, Google reviews, QR codes, and staff notes.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with w2:
+        st.markdown("""
+        <div class="apple-step-card">
+            <div class="apple-step-badge">2</div>
+            <div style="font-weight: 600; font-size: 14px; color: var(--apple-text-primary); margin-bottom: 6px;">Neural-Symbolic Triage</div>
+            <div style="font-size: 12px; color: var(--apple-text-secondary); line-height: 1.45;">
+                Locality resolution, same-day duplicate clustering, and statutory safety floor policy overrides.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with w3:
+        st.markdown("""
+        <div class="apple-step-card">
+            <div class="apple-step-badge">3</div>
+            <div style="font-weight: 600; font-size: 14px; color: var(--apple-text-primary); margin-bottom: 6px;">Causal Anomaly Radar</div>
+            <div style="font-size: 12px; color: var(--apple-text-secondary); line-height: 1.45;">
+                Exposure-normalized z-score surge detection catching store micro-outbreaks +2 weeks early.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with w4:
+        st.markdown("""
+        <div class="apple-step-card">
+            <div class="apple-step-badge">4</div>
+            <div style="font-weight: 600; font-size: 14px; color: var(--apple-text-primary); margin-bottom: 6px;">Department Execution</div>
+            <div style="font-size: 12px; color: var(--apple-text-secondary); line-height: 1.45;">
+                Direct ticket routing to Store Ops, Sourcing, Supply Chain, and Safety & Compliance with 1-page briefs.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Prominent Jury Demo Callout Card
+    st.markdown("""
+    <div class="apple-jury-cta-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span class="apple-badge apple-badge-blue">Official Hackathon Demonstration</span>
+            <span style="font-size: 12px; color: var(--apple-text-secondary);">Retail Track R5 · Team Byteforce</span>
+        </div>
+        <div style="font-size: 22px; font-weight: 700; color: var(--apple-text-primary); margin-bottom: 8px;">
+            Experience the Guided Jury Evaluation Walkthrough
+        </div>
+        <div style="font-size: 14px; color: var(--apple-text-secondary); max-width: 720px; line-height: 1.5; margin-bottom: 20px;">
+            Take an interactive 6-stage presentation covering Strategic Context, Data Architecture, Live AI Sandbox, Emerging Anomaly Radar, Official Benchmark Scorecard (0.8641), and Practical ROI.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    cta_b1, cta_b2, _ = st.columns([1.3, 1.3, 2.4])
+    with cta_b1:
+        if st.button("Start 6-Stage Jury Demo", type="primary", use_container_width=True, key="bottom_start_demo"):
+            st.session_state.jury_demo_mode = True
+            st.session_state.jury_demo_step = 1
+            st.rerun()
+    with cta_b2:
+        if st.button("Launch Operational Dashboard →", type="secondary", use_container_width=True, key="bottom_explore_dash"):
+            st.session_state.nav_choice = "Executive Overview"
+            st.rerun()
+
+
 # --- VIEW 1: EXECUTIVE OVERVIEW ---
-if selected_nav in ["Executive Overview", "Complete Unified View"]:
+elif selected_nav in ["Executive Overview", "Complete Unified View"]:
     st.markdown(render_section_banner(
         title="Executive Operational Overview",
         subtitle="Enterprise-wide chatter stream metrics, statutory compliance escalations, and channel ingestion mix.",
@@ -592,7 +797,7 @@ if selected_nav in ["Executive Overview", "Complete Unified View"]:
 
 
 # --- VIEW 2: LIVE AI ANALYSIS ---
-if selected_nav in ["Live AI Analysis", "Complete Unified View"]:
+elif selected_nav in ["Live AI Analysis", "Complete Unified View"]:
     st.markdown(render_section_banner(
         title="Live AI Voice-of-Store Triage",
         subtitle="Real-time inference pipeline evaluating text, assigning 31-class taxonomy, and enforcing statutory severity floors.",
@@ -679,7 +884,7 @@ if selected_nav in ["Live AI Analysis", "Complete Unified View"]:
 
 
 # --- VIEW 3: DATA EXPLORER ---
-if selected_nav in ["Data Explorer", "Complete Unified View"]:
+elif selected_nav in ["Data Explorer", "Complete Unified View"]:
     st.markdown(render_section_banner(
         title="Interactive Feedback Data Explorer",
         subtitle="Search, filter, and audit store feedback records with real-time responsive analytics.",
@@ -750,7 +955,7 @@ if selected_nav in ["Data Explorer", "Complete Unified View"]:
 
 
 # --- VIEW 4: INCIDENT RADAR ---
-if selected_nav in ["Incident Radar", "Complete Unified View"]:
+elif selected_nav in ["Incident Radar", "Complete Unified View"]:
     st.markdown(render_section_banner(
         title="Store-Level Emerging Incident Radar",
         subtitle="Causal multi-week anomaly radar flagging store micro-trends up to 2-3 weeks ahead of batch review.",
@@ -794,7 +999,7 @@ if selected_nav in ["Incident Radar", "Complete Unified View"]:
 
 
 # --- VIEW 5: REGIONAL INTELLIGENCE ---
-if selected_nav in ["Regional Intelligence", "Complete Unified View"]:
+elif selected_nav in ["Regional Intelligence", "Complete Unified View"]:
     st.markdown(render_section_banner(
         title="Regional Weekly Operational Briefs",
         subtitle="Executive one-page briefs summarizing top 5 issues, trends vs prior week, affected stores, and verbatim evidence.",
@@ -830,7 +1035,7 @@ if selected_nav in ["Regional Intelligence", "Complete Unified View"]:
 
 
 # --- VIEW 6: MODEL INSIGHTS & BENCHMARKS ---
-if selected_nav in ["Model Insights & Benchmarks", "Complete Unified View"]:
+elif selected_nav in ["Model Insights & Benchmarks", "Complete Unified View"]:
     st.markdown(render_section_banner(
         title="Model Insights, Benchmarks & Limitations",
         subtitle="Detailed breakdown of offline ground-truth evaluation, 5-fold cross-validation, and production considerations.",
@@ -869,7 +1074,7 @@ if selected_nav in ["Model Insights & Benchmarks", "Complete Unified View"]:
 
 
 # --- VIEW 7: REPORTS & EXPORTS ---
-if selected_nav in ["Reports & Exports", "Complete Unified View"]:
+elif selected_nav in ["Reports & Exports", "Complete Unified View"]:
     st.markdown(render_section_banner(
         title="Reports, Benchmarks & Deliverables",
         subtitle="Official submission artifacts for Retail Track R5 evaluation.",
