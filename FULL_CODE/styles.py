@@ -867,6 +867,57 @@ p, span, label, div {
   color: var(--apple-text-secondary);
 }
 
+/* Horizontal Proportional Distribution Bars */
+.apple-dist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.apple-dist-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.apple-dist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.apple-dist-label {
+  font-weight: 500;
+  color: var(--apple-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.apple-dist-values {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+}
+
+.apple-dist-bar-bg {
+  width: 100%;
+  height: 8px;
+  background-color: var(--apple-surface-muted);
+  border-radius: var(--apple-radius-pill);
+  overflow: hidden;
+}
+
+.apple-dist-bar-fill {
+  height: 100%;
+  border-radius: var(--apple-radius-pill);
+  transition: width 0.4s ease;
+}
+
 /* Responsive Overrides */
 @media (max-width: 900px) {
   .apple-hero-headline {
@@ -1140,6 +1191,49 @@ def render_footer() -> str:
         <span class="apple-badge apple-badge-gray">39,769 Chatter Records</span>
         <span class="apple-badge apple-badge-gray">31 Issue Taxonomy</span>
         <span class="apple-badge apple-badge-blue">Official Evaluator Benchmark: 0.8641</span>
+      </div>
+    </div>
+    """
+
+
+def render_distribution_card(title: str, items: list[dict], subtitle: str | None = None) -> str:
+    """Render an Apple-style horizontal proportional distribution card."""
+    items_html = []
+    for it in items:
+        label = it.get("label", "")
+        count = it.get("count", 0)
+        pct = it.get("pct", 0.0)
+        color = it.get("color", "var(--apple-blue)")
+        icon = it.get("icon", "●")
+        count_str = f"{count:,}" if isinstance(count, (int, float)) else str(count)
+        pct_str = f"{pct * 100:.1f}%" if pct <= 1.0 else f"{pct:.1f}%"
+        bar_width = min(100.0, max(0.0, pct * 100 if pct <= 1.0 else pct))
+
+        items_html.append(f"""
+        <div class="apple-dist-item">
+          <div class="apple-dist-header">
+            <div class="apple-dist-label">
+              <span>{icon}</span>
+              <span>{label}</span>
+            </div>
+            <div class="apple-dist-values">
+              <strong>{count_str}</strong>
+              <span class="apple-badge apple-badge-gray" style="font-size: 10px; padding: 1px 6px;">{pct_str}</span>
+            </div>
+          </div>
+          <div class="apple-dist-bar-bg">
+            <div class="apple-dist-bar-fill" style="width: {bar_width}%; background-color: {color};"></div>
+          </div>
+        </div>
+        """)
+
+    subtitle_html = f'<div style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 12px;">{subtitle}</div>' if subtitle else ""
+    return f"""
+    <div style="background: var(--apple-surface); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-md); padding: 18px 22px; box-shadow: var(--apple-shadow-card); margin-bottom: 14px;">
+      <div style="font-size: 15px; font-weight: 600; color: var(--apple-text-primary); margin-bottom: 4px;">{title}</div>
+      {subtitle_html}
+      <div class="apple-dist-list">
+        {"".join(items_html)}
       </div>
     </div>
     """

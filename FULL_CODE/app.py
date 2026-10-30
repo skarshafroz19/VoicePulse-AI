@@ -14,6 +14,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 if CURRENT_DIR not in sys.path:
     sys.path.insert(0, CURRENT_DIR)
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 from engine import (
@@ -25,6 +26,7 @@ from engine import (
 )
 from styles import (
     APPLE_CSS,
+    render_distribution_card,
     render_empty_state,
     render_footer,
     render_header,
@@ -129,15 +131,15 @@ with st.sidebar:
         "Complete Unified View"
     ]
 
-    # Sync radio with session state
-    nav_index = nav_sections.index(st.session_state.nav_choice) if st.session_state.nav_choice in nav_sections else 0
+    if "nav_choice" not in st.session_state or st.session_state.nav_choice not in nav_sections:
+        st.session_state.nav_choice = "Executive Overview"
+
     selected_nav = st.radio(
         "Navigate Dashboard",
         nav_sections,
-        index=nav_index,
+        key="nav_choice",
         label_visibility="collapsed"
     )
-    st.session_state.nav_choice = selected_nav
 
     st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
     st.markdown("### Active Data Stream")
@@ -545,8 +547,10 @@ if st.session_state.jury_demo_mode:
 # 8. Standard Dashboard Views
 # -----------------------------------------------------------------------------
 
+is_unified = (selected_nav == "Complete Unified View")
+
 # --- VIEW 1: EXECUTIVE OVERVIEW ---
-if selected_nav in ["Executive Overview", "Complete Unified View"]:
+if selected_nav == "Executive Overview" or is_unified:
     st.markdown(render_section_banner(
         title="Executive Operational Overview",
         subtitle="Enterprise-wide chatter stream metrics, statutory compliance escalations, and channel ingestion mix.",
@@ -565,27 +569,106 @@ if selected_nav in ["Executive Overview", "Complete Unified View"]:
     with c4, st.container(border=True):
         st.metric("Cross-Channel Duplicates", f"{duplicate_count:,}", "Same-Day Store Clustered")
 
+    # Redesigned Proportional Distribution Cards (Horizontal, Legible, No Rotated Labels)
     d_col1, d_col2 = st.columns(2)
-    with d_col1, st.container(border=True):
-        st.markdown("**Ingestion Mix by Channel**")
-        if "channel" in scored_df.columns:
-            ch_dist = scored_df["channel"].value_counts().reset_index()
-            ch_dist.columns = ["Channel", "Records"]
-            ch_dist["Share"] = (ch_dist["Records"] / max(1, total_records)).round(3)
-            st.dataframe(ch_dist, width="stretch", hide_index=True)
-            # Visual Bar Distribution
-            ch_chart_data = scored_df["channel"].value_counts()
-            st.bar_chart(ch_chart_data, height=180)
+    with d_col1:
+        channel_meta = {
+            "in_app": ("In-App Mobile Application", "📱", "#0071E3"),
+            "online_review": ("Online Reviews (Google/Maps)", "⭐", "#FF9500"),
+            "call_centre_ticket": ("Call Centre & Voice Support", "📞", "#5856D6"),
+            "staff_shift_note": ("Store Staff Shift Note", "📝", "#34C759"),
+        }
+        ch_counts = scored_df["channel"].value_counts() if "channel" in scored_df.columns else pd.Series()
+        ch_items = []
+        for ch_key, cnt in ch_counts.items():
+            name, icon, color = channel_meta.get(ch_key, (str(ch_key).title(), "●", "#0071E3"))
+            ch_items.append({
+                "label": name,
+                "count": int(cnt),
+                "pct": float(cnt) / max(1, total_records),
+                "color": color,
+                "icon": icon,
+            })
+        st.markdown(render_distribution_card(
+            title="Ingestion Mix by Touchpoint Channel",
+            items=ch_items,
+            subtitle="Normalized volume and percentage share across all customer touchpoints"
+        ), unsafe_allow_html=True)
 
-    with d_col2, st.container(border=True):
-        st.markdown("**Owning Function Allocation**")
-        owner_dist = scored_df[scored_df["owner_function"] != "None (not actionable)"]["owner_function"].value_counts().reset_index()
-        owner_dist.columns = ["Owning Function", "Assigned Tickets"]
-        owner_dist["Share"] = (owner_dist["Assigned Tickets"] / max(1, total_records)).round(3)
-        st.dataframe(owner_dist, width="stretch", hide_index=True)
-        # Visual Function Allocation
-        fn_chart_data = scored_df[scored_df["owner_function"] != "None (not actionable)"]["owner_function"].value_counts()
-        st.bar_chart(fn_chart_data, height=180)
+        with st.expander("Show Channel Ingestion Tabular Breakdown", expanded=False):
+            ch_dist = scored_df["channel"].value_counts().reset_index()
+            ch_dist.columns = ["Channel Key", "Records"]
+            ch_dist["Proportion"] = (ch_dist["Records"] / max(1, total_records)).map("{:.1%}".format)
+            st.dataframe(ch_dist, width="stretch", hide_index=True)
+
+    with d_col2:
+        owner_meta = {
+            "Supply Chain": ("Supply Chain & Sourcing", "📦", "#0071E3"),
+            "Store Ops": ("Store Operations", "🏬", "#34C759"),
+            "Digital": ("Digital & App Experience", "💻", "#5856D6"),
+            "Merchandising": ("Merchandising & Product Quality", "🛍️", "#FF9500"),
+            "HR": ("Human Resources & Staffing", "👥", "#86868B"),
+        }
+        valid_owners = scored_df[scored_df["owner_function"] != "None (not actionable)"]
+        owner_counts = valid_owners["owner_function"].value_counts() if not valid_owners.empty else pd.Series()
+        total_assigned = len(valid_owners)
+        owner_items = []
+        for ow_key, cnt in owner_counts.items():
+            name, icon, color = owner_meta.get(ow_key, (str(ow_key), "●", "#0071E3"))
+            owner_items.append({
+                "label": name,
+                "count": int(cnt),
+                "pct": float(cnt) / max(1, total_assigned),
+                "color": color,
+                "icon": icon,
+            })
+        st.markdown(render_distribution_card(
+            title="Owning Department Allocation",
+            items=owner_items,
+            subtitle="Distribution of actionable complaints assigned to operational owners"
+        ), unsafe_allow_html=True)
+
+        with st.expander("Show Department Allocation Tabular Breakdown", expanded=False):
+            owner_dist = valid_owners["owner_function"].value_counts().reset_index()
+            owner_dist.columns = ["Department", "Assigned Tickets"]
+            owner_dist["Share of Actionable"] = (owner_dist["Assigned Tickets"] / max(1, total_assigned)).map("{:.1%}".format)
+            st.dataframe(owner_dist, width="stretch", hide_index=True)
+
+    # 26-Week Volume Trajectory & Stream Dynamics (Altair Area Chart with Gradient)
+    with st.container(border=True):
+        st.markdown("**26-Week Stream Ingestion Velocity & Trajectory**")
+        st.caption("Weekly chatter volume trajectory across all 26 continuous operating weeks (March 30, 2026 – September 21, 2026).")
+        
+        if "week_start" in scored_df.columns:
+            weekly_vol = scored_df[scored_df["week_start"] != "unknown"].groupby("week_start").size().reset_index(name="Tickets")
+            if not weekly_vol.empty:
+                area_chart = alt.Chart(weekly_vol).mark_area(
+                    line={"color": "#0071E3", "strokeWidth": 2.5},
+                    color=alt.Gradient(
+                        gradient="linear",
+                        stops=[
+                            alt.GradientStop(color="rgba(0, 113, 227, 0.35)", offset=0),
+                            alt.GradientStop(color="rgba(0, 113, 227, 0.02)", offset=1),
+                        ],
+                        x1=1, x2=1, y1=1, y2=0
+                    )
+                ).encode(
+                    x=alt.X("week_start:T", title=None, axis=alt.Axis(format="%b %d", labelAngle=0, grid=False, tickCount=7)),
+                    y=alt.Y("Tickets:Q", title="Weekly Volume", scale=alt.Scale(zero=False), axis=alt.Axis(grid=True)),
+                    tooltip=[
+                        alt.Tooltip("week_start:T", title="Week Commencing", format="%B %d, %Y"),
+                        alt.Tooltip("Tickets:Q", title="Chatter Tickets", format=","),
+                    ]
+                ).properties(height=190)
+                st.altair_chart(area_chart, use_container_width=True)
+
+        st.markdown("""
+        <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--apple-text-secondary); margin-top: 6px;">
+            <span>● <strong>Velocity:</strong> Consistent ~1,500 tickets/week baseline</span>
+            <span>● <strong>Peak Surge:</strong> Week 2026-08-10 (1,989 tickets)</span>
+            <span>● <strong>Dynamics:</strong> Outbreaks manifest as store-level micro-spikes rather than chain-wide floods</span>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Key Findings & Recent Stream
     with st.container(border=True):
@@ -603,11 +686,14 @@ if selected_nav in ["Executive Overview", "Complete Unified View"]:
             hide_index=True
         )
 
-    st.markdown(render_footer(), unsafe_allow_html=True)
+    if not is_unified:
+        st.markdown(render_footer(), unsafe_allow_html=True)
+    else:
+        st.markdown("<div style='height: 36px; border-bottom: 1px solid var(--apple-border); margin-bottom: 28px;'></div>", unsafe_allow_html=True)
 
 
 # --- VIEW 2: LIVE AI ANALYSIS ---
-elif selected_nav in ["Live AI Analysis", "Complete Unified View"]:
+if selected_nav == "Live AI Analysis" or is_unified:
     st.markdown(render_section_banner(
         title="Live AI Voice-of-Store Triage",
         subtitle="Real-time inference pipeline evaluating text, assigning 31-class taxonomy, and enforcing statutory severity floors.",
@@ -692,11 +778,14 @@ elif selected_nav in ["Live AI Analysis", "Complete Unified View"]:
                 </div>
                 """, unsafe_allow_html=True)
 
-    st.markdown(render_footer(), unsafe_allow_html=True)
+    if not is_unified:
+        st.markdown(render_footer(), unsafe_allow_html=True)
+    else:
+        st.markdown("<div style='height: 36px; border-bottom: 1px solid var(--apple-border); margin-bottom: 28px;'></div>", unsafe_allow_html=True)
 
 
 # --- VIEW 3: DATA EXPLORER ---
-elif selected_nav in ["Data Explorer", "Complete Unified View"]:
+if selected_nav == "Data Explorer" or is_unified:
     st.markdown(render_section_banner(
         title="Interactive Feedback Data Explorer",
         subtitle="Search, filter, and audit store feedback records with real-time responsive analytics.",
@@ -794,11 +883,14 @@ elif selected_nav in ["Data Explorer", "Complete Unified View"]:
                     </div>
                     """, unsafe_allow_html=True)
 
-    st.markdown(render_footer(), unsafe_allow_html=True)
+    if not is_unified:
+        st.markdown(render_footer(), unsafe_allow_html=True)
+    else:
+        st.markdown("<div style='height: 36px; border-bottom: 1px solid var(--apple-border); margin-bottom: 28px;'></div>", unsafe_allow_html=True)
 
 
 # --- VIEW 4: INCIDENT RADAR ---
-elif selected_nav in ["Incident Radar", "Complete Unified View"]:
+if selected_nav == "Incident Radar" or is_unified:
     st.markdown(render_section_banner(
         title="Store-Level Emerging Incident Radar",
         subtitle="Causal multi-week anomaly radar flagging store micro-trends up to 2-3 weeks ahead of batch review.",
@@ -840,11 +932,14 @@ elif selected_nav in ["Incident Radar", "Complete Unified View"]:
         alert_level="CRITICAL"
     ), unsafe_allow_html=True)
 
-    st.markdown(render_footer(), unsafe_allow_html=True)
+    if not is_unified:
+        st.markdown(render_footer(), unsafe_allow_html=True)
+    else:
+        st.markdown("<div style='height: 36px; border-bottom: 1px solid var(--apple-border); margin-bottom: 28px;'></div>", unsafe_allow_html=True)
 
 
 # --- VIEW 5: REGIONAL INTELLIGENCE ---
-elif selected_nav in ["Regional Intelligence", "Complete Unified View"]:
+if selected_nav == "Regional Intelligence" or is_unified:
     st.markdown(render_section_banner(
         title="Regional Weekly Operational Briefs",
         subtitle="Executive one-page briefs summarizing top 5 issues, trends vs prior week, affected stores, and verbatim evidence.",
@@ -885,11 +980,14 @@ elif selected_nav in ["Regional Intelligence", "Complete Unified View"]:
             use_container_width=True
         )
 
-    st.markdown(render_footer(), unsafe_allow_html=True)
+    if not is_unified:
+        st.markdown(render_footer(), unsafe_allow_html=True)
+    else:
+        st.markdown("<div style='height: 36px; border-bottom: 1px solid var(--apple-border); margin-bottom: 28px;'></div>", unsafe_allow_html=True)
 
 
 # --- VIEW 6: MODEL INSIGHTS & BENCHMARKS ---
-elif selected_nav in ["Model Insights & Benchmarks", "Complete Unified View"]:
+if selected_nav == "Model Insights & Benchmarks" or is_unified:
     st.markdown(render_section_banner(
         title="Model Insights, Benchmarks & Limitations",
         subtitle="Detailed breakdown of offline ground-truth evaluation, 5-fold cross-validation, and production considerations.",
@@ -926,11 +1024,14 @@ elif selected_nav in ["Model Insights & Benchmarks", "Complete Unified View"]:
     with st.expander("Explore 31-Class Retail Issue Taxonomy", expanded=False):
         st.dataframe(taxonomy_df, width="stretch", hide_index=True)
 
-    st.markdown(render_footer(), unsafe_allow_html=True)
+    if not is_unified:
+        st.markdown(render_footer(), unsafe_allow_html=True)
+    else:
+        st.markdown("<div style='height: 36px; border-bottom: 1px solid var(--apple-border); margin-bottom: 28px;'></div>", unsafe_allow_html=True)
 
 
 # --- VIEW 7: REPORTS & DELIVERABLES ---
-elif selected_nav in ["Reports & Deliverables", "Reports & Exports", "Complete Unified View"]:
+if selected_nav in ["Reports & Deliverables", "Reports & Exports"] or is_unified:
     st.markdown(render_section_banner(
         title="Reports, Benchmarks & Deliverables",
         subtitle="Official submission artifacts for Retail Track R5 evaluation.",
