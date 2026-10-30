@@ -154,6 +154,59 @@ class VoicePulseClassifier:
         res["actionable"] = final_acts
         return res
 
+    def predict_detailed(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Generate predictions with genuine probability confidence scores and statutory override audit details.
+        """
+        if not self.is_fitted:
+            raise RuntimeError("Classifier must be fitted before predict.")
+
+        texts = df["text"].map(normalise_text)
+        X = self.vec.transform(texts)
+
+        pred_issues = self.clf_issue.predict(X)
+        pred_sevs = self.clf_sev.predict(X)
+        pred_acts = self.clf_act.predict(X)
+
+        proba_issues = self.clf_issue.predict_proba(X)
+        proba_sevs = self.clf_sev.predict_proba(X)
+        proba_acts = self.clf_act.predict_proba(X)
+
+        issue_confs = np.max(proba_issues, axis=1)
+        sev_confs = np.max(proba_sevs, axis=1)
+        act_confs = np.max(proba_acts, axis=1)
+
+        final_sevs: list[str] = []
+        override_flags: list[bool] = []
+        for iss, raw_s in zip(pred_issues, pred_sevs):
+            floor = self.floor_map.get(iss, "low")
+            if iss in POLICY_HIGH_SEVERITY_ISSUES:
+                floor = "high"
+            elif iss in POLICY_MEDIUM_SEVERITY_ISSUES:
+                floor = "medium"
+
+            raw_rank = SEV_RANK.get(raw_s, 0)
+            floor_rank = SEV_RANK.get(floor, 0)
+            chosen_sev = REV_SEV_RANK[max(raw_rank, floor_rank)]
+            final_sevs.append(chosen_sev)
+            override_flags.append(chosen_sev != raw_s)
+
+        final_acts = pred_acts.copy()
+        for idx, iss in enumerate(pred_issues):
+            if iss in {"NI01", "NI02", "NI03"}:
+                final_acts[idx] = 0
+
+        res = df.copy()
+        res["issue_type_id"] = pred_issues
+        res["raw_severity"] = pred_sevs
+        res["severity"] = final_sevs
+        res["actionable"] = final_acts
+        res["issue_confidence"] = issue_confs
+        res["severity_confidence"] = sev_confs
+        res["actionable_confidence"] = act_confs
+        res["policy_override_applied"] = override_flags
+        return res
+
 
 def deduplicate_same_day(df: pd.DataFrame) -> pd.DataFrame:
     """
