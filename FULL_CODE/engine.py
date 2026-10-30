@@ -328,17 +328,21 @@ def build_regional_weekly_brief(
     tax_name_map = taxonomy_df.set_index("issue_type_id")["issue_type"].to_dict()
     tax_owner_map = taxonomy_df.set_index("issue_type_id")["owner_function"].to_dict()
 
-    m = scored_df.merge(store_master[["store_id", "store_name", "region"]], on="store_id", how="left")
-    curr_df = m[(m["region"] == region) & (m["week_start"] == week_start)]
-    prev_df = m[(m["region"] == region) & (m["week_start"] == prev_week_start)] if prev_week_start else pd.DataFrame()
+    s_col = "resolved_store_id" if "resolved_store_id" in scored_df.columns else "store_id"
+    m = scored_df.copy()
+    if "region" not in m.columns and not store_master.empty:
+        m = m.merge(store_master[["store_id", "store_name", "region"]], left_on=s_col, right_on="store_id", how="left")
+
+    curr_df = m[(m["region"] == region) & (m["week_start"] == week_start)] if "region" in m.columns and "week_start" in m.columns else pd.DataFrame()
+    prev_df = m[(m["region"] == region) & (m["week_start"] == prev_week_start)] if prev_week_start and "region" in m.columns and "week_start" in m.columns else pd.DataFrame()
 
     total_records = len(curr_df)
     actionable_count = int(curr_df["actionable"].sum()) if "actionable" in curr_df.columns else 0
     high_critical = int(curr_df["severity"].isin(["high", "critical"]).sum()) if "severity" in curr_df.columns else 0
 
-    prev_counts = prev_df["issue_type_id"].value_counts().to_dict() if not prev_df.empty else {}
+    prev_counts = prev_df["issue_type_id"].value_counts().to_dict() if not prev_df.empty and "issue_type_id" in prev_df.columns else {}
 
-    top_issues = curr_df[curr_df["issue_type_id"].str.startswith("IT")]["issue_type_id"].value_counts().head(5)
+    top_issues = curr_df[curr_df["issue_type_id"].str.startswith("IT")]["issue_type_id"].value_counts().head(5) if not curr_df.empty and "issue_type_id" in curr_df.columns else pd.Series(dtype=int)
 
     brief_lines = [
         f"# Regional Weekly Action Brief: {region.upper()} REGION",
@@ -350,31 +354,35 @@ def build_regional_weekly_brief(
         "| :--- | :--- | :--- | :--- | :---: | :--- | :--- |"
     ]
 
-    for rank, (iss_id, cnt) in enumerate(top_issues.items(), 1):
-        iss_name = tax_name_map.get(iss_id, iss_id)
-        owner = tax_owner_map.get(iss_id, "Store Ops")
-        p_cnt = prev_counts.get(iss_id, 0)
+    if top_issues.empty:
+        brief_lines.append("| - | *No actionable issue trends recorded for this selection* | - | 0 | - | - | - |")
+    else:
+        for rank, (iss_id, cnt) in enumerate(top_issues.items(), 1):
+            iss_name = tax_name_map.get(iss_id, iss_id)
+            owner = tax_owner_map.get(iss_id, "Store Ops")
+            p_cnt = prev_counts.get(iss_id, 0)
 
-        if p_cnt == 0:
-            trend = "NEW"
-        elif cnt > p_cnt * 1.15:
-            trend = "▲ RISING"
-        elif cnt < p_cnt * 0.85:
-            trend = "▼ FALLING"
-        else:
-            trend = "► STABLE"
+            if p_cnt == 0:
+                trend = "NEW"
+            elif cnt > p_cnt * 1.15:
+                trend = "▲ RISING"
+            elif cnt < p_cnt * 0.85:
+                trend = "▼ FALLING"
+            else:
+                trend = "► STABLE"
 
-        iss_records = curr_df[curr_df["issue_type_id"] == iss_id]
-        stores_affected = ", ".join(iss_records["store_id"].dropna().unique()[:3])
-        if not stores_affected:
-            stores_affected = "Regional / App"
+            iss_records = curr_df[curr_df["issue_type_id"] == iss_id]
+            st_col = s_col if s_col in iss_records.columns else "store_id"
+            stores_affected = ", ".join(iss_records[st_col].dropna().unique()[:3]) if st_col in iss_records.columns else ""
+            if not stores_affected:
+                stores_affected = "Regional / App"
 
-        sample_quote = iss_records["text"].dropna().iloc[0] if not iss_records.empty else "N/A"
-        clean_quote = sample_quote.replace("\n", " ").replace("|", "/").strip()[:100] + "..."
+            sample_quote = iss_records["text"].dropna().iloc[0] if not iss_records.empty and "text" in iss_records.columns else "N/A"
+            clean_quote = sample_quote.replace("\n", " ").replace("|", "/").strip()[:100] + "..."
 
-        brief_lines.append(
-            f"| {rank} | **{iss_id}**: {iss_name} | `{owner}` | **{cnt}** | {trend} | {stores_affected} | \"{clean_quote}\" |"
-        )
+            brief_lines.append(
+                f"| {rank} | **{iss_id}**: {iss_name} | `{owner}` | **{cnt}** | {trend} | {stores_affected} | \"{clean_quote}\" |"
+            )
 
     brief_lines.extend([
         "",

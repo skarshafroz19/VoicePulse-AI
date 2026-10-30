@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from engine import VoicePulseClassifier
+from engine import VoicePulseClassifier, build_regional_weekly_brief
 from styles import render_header, render_jury_banner, render_section_banner, render_empty_state
 
 
@@ -55,6 +55,29 @@ class TestUIAndDemo(unittest.TestCase):
         self.assertIn("policy_override_applied", pred.columns)
         self.assertGreaterEqual(pred["issue_confidence"].iloc[0], 0.0)
         self.assertLessEqual(pred["issue_confidence"].iloc[0], 1.0)
+
+    def test_build_regional_brief_defensive(self):
+        tax_df = pd.DataFrame([
+            {"issue_type_id": "IT01", "issue_type": "Billing Queue", "owner_function": "Store Ops"}
+        ])
+        store_df = pd.DataFrame([
+            {"store_id": "ST-001", "store_name": "Kothrud Store", "region": "West"}
+        ])
+
+        # 1. Normal case
+        scored_df = pd.DataFrame([
+            {"feedback_id": "F1", "store_id": "ST-001", "resolved_store_id": "ST-001", "issue_type_id": "IT01", "severity": "low", "actionable": 1, "week_start": "2026-05-04", "text": "queue delay"}
+        ])
+        brief = build_regional_weekly_brief(scored_df, store_df, tax_df, "West", "2026-05-04")
+        self.assertIn("Regional Weekly Action Brief: WEST REGION", brief)
+        self.assertIn("Billing Queue", brief)
+
+        # 2. Empty case
+        empty_scored = pd.DataFrame(columns=["feedback_id", "store_id", "resolved_store_id", "issue_type_id", "severity", "actionable", "week_start", "text"])
+        empty_brief = build_regional_weekly_brief(empty_scored, store_df, tax_df, "West", "2026-05-04")
+        self.assertIn("Regional Weekly Action Brief: WEST REGION", empty_brief)
+        self.assertIn("Total Feedback:** 0", empty_brief)
+        self.assertIn("No actionable issue trends recorded", empty_brief)
 
 
 if __name__ == "__main__":

@@ -145,6 +145,32 @@ with st.sidebar:
 # -----------------------------------------------------------------------------
 # 5. Data Loading & Cached Pipeline Execution
 # -----------------------------------------------------------------------------
+@st.cache_resource(show_spinner=False)
+def get_live_classifier() -> VoicePulseClassifier:
+    """Cache the fitted VoicePulseClassifier for instant live AI inference."""
+    tax_file = DEFAULT_TAXONOMY if DEFAULT_TAXONOMY.exists() else (BASE_DIR / "issue_taxonomy.csv")
+    taxonomy = pd.read_csv(tax_file) if tax_file.exists() else None
+
+    labels_file = DEFAULT_LABELS_PATH if DEFAULT_LABELS_PATH.exists() else (BASE_DIR / "feedback_labels_train.csv")
+    fb_file = DEFAULT_FEEDBACK_PATH if DEFAULT_FEEDBACK_PATH.exists() else (BASE_DIR / "feedback.csv")
+
+    clf = VoicePulseClassifier()
+    if labels_file.exists() and fb_file.exists():
+        labels = pd.read_csv(labels_file)
+        full_fb = pd.read_csv(fb_file)
+        train_m = labels.merge(full_fb[["feedback_id", "text"]], on="feedback_id")
+        clf.fit(train_m, taxonomy)
+    else:
+        dummy_tr = pd.DataFrame([
+            {"feedback_id": "D1", "text": "billing queue counter delay", "issue_type_id": "IT01", "severity": "low", "actionable": 1},
+            {"feedback_id": "D2", "text": "insect worm dead keeda in milk food", "issue_type_id": "IT17", "severity": "high", "actionable": 1},
+            {"feedback_id": "D3", "text": "freezer warm chiller broken ice melted", "issue_type_id": "IT10", "severity": "high", "actionable": 1},
+            {"feedback_id": "D4", "text": "great clean store friendly polite staff", "issue_type_id": "NI01", "severity": "low", "actionable": 0},
+        ])
+        clf.fit(dummy_tr, taxonomy)
+    return clf
+
+
 @st.cache_data(show_spinner=False)
 def load_and_score_data(mode: str, upload_content=None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     # 1. Store Master
@@ -172,25 +198,33 @@ def load_and_score_data(mode: str, upload_content=None) -> tuple[pd.DataFrame, p
     if feedback.empty:
         return feedback, stores, taxonomy, pd.DataFrame()
 
+    feedback = feedback.copy()
+
+    # Defensive normalization for custom uploads
+    if "text" not in feedback.columns:
+        for alt in ["comment", "review", "feedback", "content", "body"]:
+            if alt in feedback.columns:
+                feedback["text"] = feedback[alt].astype(str)
+                break
+        else:
+            feedback["text"] = ""
+
+    if "feedback_id" not in feedback.columns:
+        feedback["feedback_id"] = [f"FB-{i+1:05d}" for i in range(len(feedback))]
+    if "store_id" not in feedback.columns:
+        feedback["store_id"] = None
+    if "created_at" not in feedback.columns:
+        feedback["created_at"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+    if "channel" not in feedback.columns:
+        feedback["channel"] = "Custom Upload"
+
     # Fast-load precomputed predictions if matching official dataset
     if mode == "Official Stream (39,769 records)" and PRED_PATH.exists() and len(feedback) == 39769:
         preds = pd.read_csv(PRED_PATH)
         scored = feedback.merge(preds[["feedback_id", "issue_type_id", "severity", "actionable"]], on="feedback_id")
     else:
-        # Fit on training labels if available
-        if DEFAULT_LABELS_PATH.exists() and DEFAULT_FEEDBACK_PATH.exists():
-            labels = pd.read_csv(DEFAULT_LABELS_PATH)
-            full_fb = pd.read_csv(DEFAULT_FEEDBACK_PATH)
-            train_m = labels.merge(full_fb[["feedback_id", "text"]], on="feedback_id")
-            clf = VoicePulseClassifier().fit(train_m, taxonomy)
-        else:
-            clf = VoicePulseClassifier()
-            dummy_tr = pd.DataFrame([
-                {"feedback_id": "D1", "text": "queue", "issue_type_id": "IT01", "severity": "low", "actionable": 1},
-                {"feedback_id": "D2", "text": "worm", "issue_type_id": "IT17", "severity": "high", "actionable": 1},
-                {"feedback_id": "D3", "text": "good", "issue_type_id": "NI01", "severity": "low", "actionable": 0},
-            ])
-            clf.fit(dummy_tr, taxonomy)
+        # Use cached production classifier
+        clf = get_live_classifier()
         scored = clf.predict(feedback)
 
     # Resolve store localities and parse dates
@@ -210,29 +244,6 @@ def load_and_score_data(mode: str, upload_content=None) -> tuple[pd.DataFrame, p
         flags = detect_emerging_incidents(scored, stores)
 
     return scored, stores, taxonomy, flags
-
-
-@st.cache_resource(show_spinner=False)
-def get_live_classifier() -> VoicePulseClassifier:
-    """Cache the fitted VoicePulseClassifier for instant live AI inference."""
-    tax_file = DEFAULT_TAXONOMY if DEFAULT_TAXONOMY.exists() else (BASE_DIR / "issue_taxonomy.csv")
-    taxonomy = pd.read_csv(tax_file) if tax_file.exists() else None
-
-    clf = VoicePulseClassifier()
-    if DEFAULT_LABELS_PATH.exists() and DEFAULT_FEEDBACK_PATH.exists():
-        labels = pd.read_csv(DEFAULT_LABELS_PATH)
-        full_fb = pd.read_csv(DEFAULT_FEEDBACK_PATH)
-        train_m = labels.merge(full_fb[["feedback_id", "text"]], on="feedback_id")
-        clf.fit(train_m, taxonomy)
-    else:
-        dummy_tr = pd.DataFrame([
-            {"feedback_id": "D1", "text": "billing queue counter delay", "issue_type_id": "IT01", "severity": "low", "actionable": 1},
-            {"feedback_id": "D2", "text": "insect worm dead keeda in milk food", "issue_type_id": "IT17", "severity": "high", "actionable": 1},
-            {"feedback_id": "D3", "text": "freezer warm chiller broken ice melted", "issue_type_id": "IT10", "severity": "high", "actionable": 1},
-            {"feedback_id": "D4", "text": "great clean store friendly polite staff", "issue_type_id": "NI01", "severity": "low", "actionable": 0},
-        ])
-        clf.fit(dummy_tr, taxonomy)
-    return clf
 
 
 with st.spinner("Processing feedback stream through VoicePulse AI pipeline..."):
@@ -540,7 +551,8 @@ if selected_nav in ["Executive Overview", "Complete Unified View"]:
     with c1, st.container(border=True):
         st.metric("Total Ingested Chatter", f"{total_records:,}", "26 Weeks Live Stream")
     with c2, st.container(border=True):
-        st.metric("Actionable Tickets", f"{actionable_count:,}", f"{(actionable_count/total_records*100):.1f}% Routed to Owners")
+        act_share = (actionable_count / max(1, total_records) * 100) if total_records > 0 else 0.0
+        st.metric("Actionable Tickets", f"{actionable_count:,}", f"{act_share:.1f}% Routed to Owners")
     with c3, st.container(border=True):
         st.metric("Statutory Safety Incidents", f"{high_critical_count:,}", "Immediate Floor Escalation")
     with c4, st.container(border=True):
@@ -552,14 +564,14 @@ if selected_nav in ["Executive Overview", "Complete Unified View"]:
         if "channel" in scored_df.columns:
             ch_dist = scored_df["channel"].value_counts().reset_index()
             ch_dist.columns = ["Channel", "Records"]
-            ch_dist["Share"] = (ch_dist["Records"] / total_records).round(3)
+            ch_dist["Share"] = (ch_dist["Records"] / max(1, total_records)).round(3)
             st.dataframe(ch_dist, width="stretch", hide_index=True)
 
     with d_col2, st.container(border=True):
         st.markdown("**Owning Function Allocation**")
         owner_dist = scored_df[scored_df["owner_function"] != "None (not actionable)"]["owner_function"].value_counts().reset_index()
         owner_dist.columns = ["Owning Function", "Assigned Tickets"]
-        owner_dist["Share"] = (owner_dist["Assigned Tickets"] / total_records).round(3)
+        owner_dist["Share"] = (owner_dist["Assigned Tickets"] / max(1, total_records)).round(3)
         st.dataframe(owner_dist, width="stretch", hide_index=True)
 
     # Key Findings & Recent Stream
@@ -702,10 +714,12 @@ if selected_nav in ["Data Explorer", "Complete Unified View"]:
         filtered_count = len(view_df)
         filt_col1, filt_col2, filt_col3 = st.columns(3)
         with filt_col1:
-            st.metric("Matching Feedback", f"{filtered_count:,}", f"{(filtered_count / total_records * 100):.1f}% of Ingested")
+            match_pct = (filtered_count / max(1, total_records) * 100) if total_records > 0 else 0.0
+            st.metric("Matching Feedback", f"{filtered_count:,}", f"{match_pct:.1f}% of Ingested")
         with filt_col2:
             filt_act = int(view_df["actionable"].sum()) if filtered_count > 0 else 0
-            st.metric("Actionable Proportion", f"{filt_act:,}", f"{(filt_act / max(1, filtered_count) * 100):.1f}% Actionable")
+            act_prop = (filt_act / max(1, filtered_count) * 100) if filtered_count > 0 else 0.0
+            st.metric("Actionable Proportion", f"{filt_act:,}", f"{act_prop:.1f}% Actionable")
         with filt_col3:
             filt_hc = int(view_df["severity"].isin(["high", "critical"]).sum()) if filtered_count > 0 else 0
             st.metric("High / Critical Risk", f"{filt_hc:,}", "Floor Escalations")
@@ -716,9 +730,13 @@ if selected_nav in ["Data Explorer", "Complete Unified View"]:
         # Paginated display
         page_size = 50
         total_pages = max(1, (filtered_count + page_size - 1) // page_size)
+        cur_page = int(st.session_state.get("explorer_page", 1))
+        if cur_page > total_pages:
+            cur_page = 1
+            st.session_state.explorer_page = 1
         p_col1, p_col2 = st.columns([1, 4])
         with p_col1:
-            page = st.number_input(f"Page (1 to {total_pages})", min_value=1, max_value=total_pages, value=1, step=1)
+            page = st.number_input(f"Page (1 to {total_pages})", min_value=1, max_value=max(1, total_pages), value=cur_page, step=1, key="explorer_page")
 
         start_idx = (page - 1) * page_size
         end_idx = min(start_idx + page_size, filtered_count)
@@ -784,15 +802,17 @@ if selected_nav in ["Regional Intelligence", "Complete Unified View"]:
         badge_color="blue"
     ), unsafe_allow_html=True)
 
-    all_regions = sorted(store_master_df["region"].unique())
-    all_weeks = sorted([w for w in scored_df["week_start"].unique() if w != "unknown"])
+    all_regions = sorted(store_master_df["region"].dropna().unique()) if "region" in store_master_df.columns and not store_master_df["region"].dropna().empty else ["West", "South", "North", "East", "Central"]
+    all_weeks = sorted([w for w in scored_df["week_start"].dropna().unique() if w != "unknown"])
+    if not all_weeks:
+        all_weeks = ["2026-05-04"]
 
     reg_col1, reg_col2 = st.columns(2)
     with reg_col1:
         sel_region = st.selectbox("Select Operational Region", all_regions, index=0)
     with reg_col2:
         sel_week_idx = len(all_weeks) - 1 if all_weeks else 0
-        sel_week = st.selectbox("Select Week Commencing (Monday)", all_weeks, index=sel_week_idx)
+        sel_week = st.selectbox("Select Week Commencing (Monday)", all_weeks, index=min(sel_week_idx, max(0, len(all_weeks) - 1)))
 
     prev_week = all_weeks[all_weeks.index(sel_week) - 1] if sel_week in all_weeks and all_weeks.index(sel_week) > 0 else None
 
