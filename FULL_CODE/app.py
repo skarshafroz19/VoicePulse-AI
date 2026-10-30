@@ -6,6 +6,13 @@ Full interactive triage, emerging incident radar, regional briefs, and data expo
 from __future__ import annotations
 
 from pathlib import Path
+import sys
+import os
+
+# Ensure FULL_CODE directory is in sys.path regardless of execution working directory
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
 
 import pandas as pd
 import streamlit as st
@@ -107,14 +114,16 @@ with st.sidebar:
 @st.cache_data(show_spinner=False)
 def load_and_score_data(mode: str, upload_content=None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     # 1. Store Master
-    if DEFAULT_STORE_MASTER.exists():
-        stores = pd.read_csv(DEFAULT_STORE_MASTER)
+    store_file = DEFAULT_STORE_MASTER if DEFAULT_STORE_MASTER.exists() else (BASE_DIR / "store_master.csv")
+    if store_file.exists():
+        stores = pd.read_csv(store_file)
     else:
         stores = pd.DataFrame([{"store_id": "ST-001", "store_name": "Saffron Market Store", "region": "West"}])
 
     # 2. Taxonomy
-    if DEFAULT_TAXONOMY.exists():
-        taxonomy = pd.read_csv(DEFAULT_TAXONOMY)
+    tax_file = DEFAULT_TAXONOMY if DEFAULT_TAXONOMY.exists() else (BASE_DIR / "issue_taxonomy.csv")
+    if tax_file.exists():
+        taxonomy = pd.read_csv(tax_file)
     else:
         taxonomy = pd.DataFrame([{"issue_type_id": "IT01", "issue_type": "Billing Queue", "owner_function": "Store Ops"}])
 
