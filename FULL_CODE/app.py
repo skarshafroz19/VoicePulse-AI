@@ -17,6 +17,7 @@ if CURRENT_DIR not in sys.path:
 import altair as alt
 import pandas as pd
 import streamlit as st
+import textwrap
 from engine import (
     VoicePulseClassifier,
     build_regional_weekly_brief,
@@ -26,7 +27,6 @@ from engine import (
 )
 from styles import (
     APPLE_CSS,
-    render_distribution_card,
     render_empty_state,
     render_footer,
     render_header,
@@ -95,17 +95,15 @@ if "live_analysis_store" not in st.session_state:
 # 4. Sidebar: Product Identity, Jury Demo & Navigation
 # -----------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("""
-    <div style="padding: 10px 4px 16px 4px; border-bottom: 1px solid var(--apple-border); margin-bottom: 16px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #0071E3 0%, #5856D6 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 19px; box-shadow: 0 2px 6px rgba(0, 113, 227, 0.3);">📡</div>
-            <div>
-                <div style="font-weight: 600; font-size: 16px; color: var(--apple-text-primary); letter-spacing: -0.01em;">VoicePulse AI</div>
-                <div style="font-size: 11px; color: var(--apple-text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">Saffron Retail Group · R5</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("""<div style="padding: 10px 4px 16px 4px; border-bottom: 1px solid var(--apple-border); margin-bottom: 16px;">
+<div style="display: flex; align-items: center; gap: 12px;">
+<div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #0071E3 0%, #5856D6 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 19px; box-shadow: 0 2px 6px rgba(0, 113, 227, 0.3);">📡</div>
+<div>
+<div style="font-weight: 600; font-size: 16px; color: var(--apple-text-primary); letter-spacing: -0.01em;">VoicePulse AI</div>
+<div style="font-size: 11px; color: var(--apple-text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">Saffron Retail Group · R5</div>
+</div>
+</div>
+</div>""", unsafe_allow_html=True)
 
     # Prominent Jury Demo Mode Button
     if not st.session_state.jury_demo_mode:
@@ -348,12 +346,12 @@ if st.session_state.jury_demo_mode:
             with c3:
                 st.metric("Statutory Safety Incidents", "5,972", "Critical Regulatory Risk")
 
-            st.markdown("""
+            st.markdown(textwrap.dedent("""
             <div class="apple-callout">
                 <strong>Why Standard Dashboards Fail:</strong> Traditional retail operations aggregate feedback once a month using word clouds or generic sentiment analyzers.
                 By the time an outbreak (like cold-chain failure or pest contamination) appears in a monthly summary, stores have suffered inventory spoilage, customer churn, and statutory food-safety liabilities.
             </div>
-            """, unsafe_allow_html=True)
+            """), unsafe_allow_html=True)
 
     # --- JURY STAGE 2: STREAM ARCHITECTURE ---
     elif step == 2:
@@ -422,7 +420,7 @@ if st.session_state.jury_demo_mode:
                 p_conf = float(r.get("issue_confidence", 0.0))
                 p_override = bool(r.get("policy_override_applied", False))
 
-                st.markdown(f"""
+                st.markdown(textwrap.dedent(f"""
                 <div class="apple-inference-card">
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                         <div>
@@ -449,7 +447,7 @@ if st.session_state.jury_demo_mode:
                     </div>
                     {'<div class="apple-callout" style="margin-top: 14px;"><strong>Statutory Policy Floor Activated:</strong> This issue signature is legally classified as high-risk under food safety regulations. Severity was automatically elevated to protect store compliance.</div>' if p_override or p_issue in ['IT17', 'IT06', 'IT10', 'IT16', 'IT18', 'IT04', 'IT08'] else ''}
                 </div>
-                """, unsafe_allow_html=True)
+                """), unsafe_allow_html=True)
 
     # --- JURY STAGE 4: EMERGING INCIDENT RADAR ---
     elif step == 4:
@@ -509,13 +507,13 @@ if st.session_state.jury_demo_mode:
             ])
             st.dataframe(eval_table, width="stretch", hide_index=True)
 
-            st.markdown("""
+            st.markdown(textwrap.dedent("""
             <div class="apple-callout">
                 <strong>Honest Limitations & Generalization Note:</strong>
                 While the model achieves 0.9958 classification score on the public benchmark, 5-fold cross-validation proves true out-of-fold generalization is 0.8551.
                 In production, performance on informal WhatsApp vernacular or colloquial Hinglish slang requires periodic active-learning retraining.
             </div>
-            """, unsafe_allow_html=True)
+            """), unsafe_allow_html=True)
 
     # --- JURY STAGE 6: PRACTICAL IMPACT ---
     elif step == 6:
@@ -569,70 +567,77 @@ if selected_nav == "Executive Overview" or is_unified:
     with c4, st.container(border=True):
         st.metric("Cross-Channel Duplicates", f"{duplicate_count:,}", "Same-Day Store Clustered")
 
-    # Redesigned Proportional Distribution Cards (Horizontal, Legible, No Rotated Labels)
+    # -------------------------------------------------------------------------
+    # Visual Analytics: Channel Mix & Owning Function Allocation (Altair Graphs)
+    # -------------------------------------------------------------------------
     d_col1, d_col2 = st.columns(2)
-    with d_col1:
-        channel_meta = {
-            "in_app": ("In-App Mobile Application", "📱", "#0071E3"),
-            "online_review": ("Online Reviews (Google/Maps)", "⭐", "#FF9500"),
-            "call_centre_ticket": ("Call Centre & Voice Support", "📞", "#5856D6"),
-            "staff_shift_note": ("Store Staff Shift Note", "📝", "#34C759"),
-        }
-        ch_counts = scored_df["channel"].value_counts() if "channel" in scored_df.columns else pd.Series()
-        ch_items = []
-        for ch_key, cnt in ch_counts.items():
-            name, icon, color = channel_meta.get(ch_key, (str(ch_key).title(), "●", "#0071E3"))
-            ch_items.append({
-                "label": name,
-                "count": int(cnt),
-                "pct": float(cnt) / max(1, total_records),
-                "color": color,
-                "icon": icon,
-            })
-        st.markdown(render_distribution_card(
-            title="Ingestion Mix by Touchpoint Channel",
-            items=ch_items,
-            subtitle="Normalized volume and percentage share across all customer touchpoints"
-        ), unsafe_allow_html=True)
+    with d_col1, st.container(border=True):
+        st.markdown("**Ingestion Mix by Channel**")
+        st.caption("Normalized chatter volume across all 4 touchpoints")
+        if "channel" in scored_df.columns:
+            channel_labels = {
+                "in_app": "In-App Mobile App",
+                "online_review": "Online Reviews",
+                "call_centre_ticket": "Call Centre Tickets",
+                "staff_shift_note": "Staff Shift Notes",
+            }
+            ch_df = scored_df["channel"].value_counts().reset_index()
+            ch_df.columns = ["channel_key", "Records"]
+            ch_df["Channel"] = ch_df["channel_key"].map(channel_labels).fillna(ch_df["channel_key"].astype(str))
+            ch_df["Share"] = (ch_df["Records"] / max(1, total_records) * 100).round(1).astype(str) + "%"
 
-        with st.expander("Show Channel Ingestion Tabular Breakdown", expanded=False):
-            ch_dist = scored_df["channel"].value_counts().reset_index()
-            ch_dist.columns = ["Channel Key", "Records"]
-            ch_dist["Proportion"] = (ch_dist["Records"] / max(1, total_records)).map("{:.1%}".format)
-            st.dataframe(ch_dist, width="stretch", hide_index=True)
+            ch_chart = alt.Chart(ch_df).mark_bar(cornerRadiusEnd=5, height=22).encode(
+                x=alt.X("Records:Q", title="Volume (Records)", axis=alt.Axis(grid=True)),
+                y=alt.Y("Channel:N", sort="-x", title=None, axis=alt.Axis(labelFontSize=12)),
+                color=alt.Color("Channel:N", legend=None, scale=alt.Scale(
+                    domain=["In-App Mobile App", "Online Reviews", "Call Centre Tickets", "Staff Shift Notes"],
+                    range=["#0071E3", "#FF9500", "#5856D6", "#34C759"]
+                )),
+                tooltip=[
+                    alt.Tooltip("Channel:N", title="Touchpoint"),
+                    alt.Tooltip("Records:Q", title="Volume", format=","),
+                    alt.Tooltip("Share:N", title="Share"),
+                ]
+            ).properties(height=180)
+            st.altair_chart(ch_chart, use_container_width=True)
 
-    with d_col2:
-        owner_meta = {
-            "Supply Chain": ("Supply Chain & Sourcing", "📦", "#0071E3"),
-            "Store Ops": ("Store Operations", "🏬", "#34C759"),
-            "Digital": ("Digital & App Experience", "💻", "#5856D6"),
-            "Merchandising": ("Merchandising & Product Quality", "🛍️", "#FF9500"),
-            "HR": ("Human Resources & Staffing", "👥", "#86868B"),
-        }
+            with st.expander("Show Channel Ingestion Tabular Breakdown", expanded=False):
+                st.dataframe(ch_df[["Channel", "Records", "Share"]], width="stretch", hide_index=True)
+
+    with d_col2, st.container(border=True):
+        st.markdown("**Owning Function Allocation**")
+        st.caption("Cross-functional department routing distribution")
         valid_owners = scored_df[scored_df["owner_function"] != "None (not actionable)"]
-        owner_counts = valid_owners["owner_function"].value_counts() if not valid_owners.empty else pd.Series()
-        total_assigned = len(valid_owners)
-        owner_items = []
-        for ow_key, cnt in owner_counts.items():
-            name, icon, color = owner_meta.get(ow_key, (str(ow_key), "●", "#0071E3"))
-            owner_items.append({
-                "label": name,
-                "count": int(cnt),
-                "pct": float(cnt) / max(1, total_assigned),
-                "color": color,
-                "icon": icon,
-            })
-        st.markdown(render_distribution_card(
-            title="Owning Department Allocation",
-            items=owner_items,
-            subtitle="Distribution of actionable complaints assigned to operational owners"
-        ), unsafe_allow_html=True)
+        if not valid_owners.empty:
+            dept_labels = {
+                "Supply Chain": "Supply Chain & Sourcing",
+                "Store Ops": "Store Operations",
+                "Digital": "Digital & App Experience",
+                "Merchandising": "Merchandising & Product",
+                "HR": "Human Resources & Staffing",
+            }
+            dept_df = valid_owners["owner_function"].value_counts().reset_index()
+            dept_df.columns = ["dept_key", "Assigned Tickets"]
+            dept_df["Department"] = dept_df["dept_key"].map(dept_labels).fillna(dept_df["dept_key"].astype(str))
+            dept_df["Share"] = (dept_df["Assigned Tickets"] / max(1, len(valid_owners)) * 100).round(1).astype(str) + "%"
 
-        with st.expander("Show Department Allocation Tabular Breakdown", expanded=False):
-            owner_dist = valid_owners["owner_function"].value_counts().reset_index()
-            owner_dist.columns = ["Department", "Assigned Tickets"]
-            owner_dist["Share of Actionable"] = (owner_dist["Assigned Tickets"] / max(1, total_assigned)).map("{:.1%}".format)
-            st.dataframe(owner_dist, width="stretch", hide_index=True)
+            dept_chart = alt.Chart(dept_df).mark_bar(cornerRadiusEnd=5, height=20).encode(
+                x=alt.X("Assigned Tickets:Q", title="Tickets Assigned", axis=alt.Axis(grid=True)),
+                y=alt.Y("Department:N", sort="-x", title=None, axis=alt.Axis(labelFontSize=12)),
+                color=alt.Color("Department:N", legend=None, scale=alt.Scale(
+                    domain=["Supply Chain & Sourcing", "Store Operations", "Digital & App Experience", "Merchandising & Product", "Human Resources & Staffing"],
+                    range=["#0071E3", "#34C759", "#5856D6", "#FF9500", "#86868B"]
+                )),
+                tooltip=[
+                    alt.Tooltip("Department:N", title="Department"),
+                    alt.Tooltip("Assigned Tickets:Q", title="Tickets", format=","),
+                    alt.Tooltip("Share:N", title="Share of Actionable"),
+                ]
+            ).properties(height=180)
+            st.altair_chart(dept_chart, use_container_width=True)
+
+            with st.expander("Show Department Allocation Tabular Breakdown", expanded=False):
+                st.dataframe(dept_df[["Department", "Assigned Tickets", "Share"]], width="stretch", hide_index=True)
 
     # 26-Week Volume Trajectory & Stream Dynamics (Altair Area Chart with Gradient)
     with st.container(border=True):
@@ -662,13 +667,11 @@ if selected_nav == "Executive Overview" or is_unified:
                 ).properties(height=190)
                 st.altair_chart(area_chart, use_container_width=True)
 
-        st.markdown("""
-        <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--apple-text-secondary); margin-top: 6px;">
-            <span>● <strong>Velocity:</strong> Consistent ~1,500 tickets/week baseline</span>
-            <span>● <strong>Peak Surge:</strong> Week 2026-08-10 (1,989 tickets)</span>
-            <span>● <strong>Dynamics:</strong> Outbreaks manifest as store-level micro-spikes rather than chain-wide floods</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--apple-text-secondary); margin-top: 6px;">
+<span>● <strong>Velocity:</strong> Consistent ~1,500 tickets/week baseline</span>
+<span>● <strong>Peak Surge:</strong> Week 2026-08-10 (1,989 tickets)</span>
+<span>● <strong>Dynamics:</strong> Outbreaks manifest as store-level micro-spikes rather than chain-wide floods</span>
+</div>""", unsafe_allow_html=True)
 
     # Key Findings & Recent Stream
     with st.container(border=True):
@@ -749,7 +752,7 @@ if selected_nav == "Live AI Analysis" or is_unified:
                     p_conf = float(pred_res.get("issue_confidence", 0.0))
                     p_override = bool(pred_res.get("policy_override_applied", False))
 
-                st.markdown(f"""
+                st.markdown(textwrap.dedent(f"""
                 <div class="apple-inference-card">
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                         <div>
@@ -776,7 +779,7 @@ if selected_nav == "Live AI Analysis" or is_unified:
                     </div>
                     {'<div class="apple-callout" style="margin-top: 14px;"><strong>Statutory Floor Enforced:</strong> This issue falls under mandatory statutory safety compliance. Severity elevated to protect store licensing and health safety.</div>' if p_override or p_iss in ['IT17', 'IT06', 'IT10', 'IT16', 'IT18', 'IT04', 'IT08'] else ''}
                 </div>
-                """, unsafe_allow_html=True)
+                """), unsafe_allow_html=True)
 
     if not is_unified:
         st.markdown(render_footer(), unsafe_allow_html=True)
@@ -861,7 +864,7 @@ if selected_nav == "Data Explorer" or is_unified:
                 rec_match = view_df[view_df["feedback_id"] == sel_rec_id]
                 if not rec_match.empty:
                     rec_row = rec_match.iloc[0]
-                    st.markdown(f"""
+                    st.markdown(textwrap.dedent(f"""
                     <div class="apple-incident-card" style="border-left-color: var(--apple-blue);">
                         <div class="apple-incident-meta">
                             <span class="apple-badge apple-badge-blue">{rec_row['feedback_id']}</span>
@@ -881,7 +884,7 @@ if selected_nav == "Data Explorer" or is_unified:
                             “{rec_row.get('text', '')}”
                         </div>
                     </div>
-                    """, unsafe_allow_html=True)
+                    """), unsafe_allow_html=True)
 
     if not is_unified:
         st.markdown(render_footer(), unsafe_allow_html=True)

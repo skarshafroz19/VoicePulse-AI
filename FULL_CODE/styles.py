@@ -3,6 +3,8 @@ VoicePulse AI — Apple Human Interface Guidelines (HIG) Design System
 Refined light theme, SF Pro typography, modular surfaces, and semantic tokens.
 """
 
+import textwrap
+
 APPLE_CSS = """
 <style>
 /* =====================================================================
@@ -957,7 +959,7 @@ def render_header(total_records=0, active_source="Synthetic 40k Benchmark"):
 
     record_badge = f"{records_str} Records Live" if is_numeric else records_str
 
-    return f"""
+    return textwrap.dedent(f"""
     <div class="apple-header-bar">
       <div class="apple-header-left">
         <div class="apple-app-icon">📡</div>
@@ -973,13 +975,13 @@ def render_header(total_records=0, active_source="Synthetic 40k Benchmark"):
         <span class="apple-badge apple-badge-gray">Apple HIG System</span>
       </div>
     </div>
-    """
+    """)
 
 
 def render_section_banner(title: str, subtitle: str, badge_text: str | None = None, badge_color: str = "blue") -> str:
     """Render a clean Apple-style section header banner with optional badge."""
     badge_html = f'<span class="apple-badge apple-badge-{badge_color}">{badge_text}</span>' if badge_text else ""
-    return f"""
+    return textwrap.dedent(f"""
     <div class="apple-section-banner">
       <div>
         <div style="font-size: 17px; font-weight: 600; color: var(--apple-text-primary); letter-spacing: -0.015em;">
@@ -991,12 +993,12 @@ def render_section_banner(title: str, subtitle: str, badge_text: str | None = No
       </div>
       {badge_html}
     </div>
-    """
+    """)
 
 
 def render_dashboard_preview():
     """Render a crisp, Apple-styled desktop preview frame of the VoicePulse AI product."""
-    return """
+    return textwrap.dedent("""
     <div class="apple-mockup-frame">
       <div class="apple-mockup-titlebar">
         <div class="apple-mockup-dots">
@@ -1055,7 +1057,7 @@ def render_dashboard_preview():
         </div>
       </div>
     </div>
-    """
+    """)
 
 
 def render_jury_banner(current_step: int, total_steps: int = 6, step_name: str = "", description: str = "") -> str:
@@ -1080,7 +1082,7 @@ def render_jury_banner(current_step: int, total_steps: int = 6, step_name: str =
 
     pills_str = "".join(pills_html)
 
-    return f"""
+    return textwrap.dedent(f"""
     <div class="apple-jury-banner">
       <div class="apple-jury-header">
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -1094,7 +1096,7 @@ def render_jury_banner(current_step: int, total_steps: int = 6, step_name: str =
         {pills_str}
       </div>
     </div>
-    """
+    """)
 
 
 def render_seeded_incident_card(incident_id, store_id, issue_type, owner, pattern, start_day, quotes, alert_level="CRITICAL"):
@@ -1102,7 +1104,7 @@ def render_seeded_incident_card(incident_id, store_id, issue_type, owner, patter
     badge_class = "apple-badge-red" if alert_level == "CRITICAL" else "apple-badge-amber"
     quotes_html = "".join([f'<div class="apple-quote">“{q}”</div>' for q in quotes])
     
-    return f"""
+    return textwrap.dedent(f"""
     <div class="apple-incident-card {'warning' if alert_level != 'CRITICAL' else ''}">
       <div class="apple-incident-meta">
         <span class="apple-badge {badge_class}">{alert_level} ALERT</span>
@@ -1121,12 +1123,12 @@ def render_seeded_incident_card(incident_id, store_id, issue_type, owner, patter
         {quotes_html}
       </div>
     </div>
-    """
+    """)
 
 
 def render_empty_state(title: str = "No Records Found", message: str = "Try adjusting your search criteria or active filters.", icon: str = "🔍") -> str:
     """Render an Apple-style subtle empty state."""
-    return f"""
+    return textwrap.dedent(f"""
     <div class="apple-empty-state">
       <div style="font-size: 32px; margin-bottom: 8px;">{icon}</div>
       <div style="font-size: 15px; font-weight: 600; color: var(--apple-text-primary);">{title}</div>
@@ -1134,12 +1136,12 @@ def render_empty_state(title: str = "No Records Found", message: str = "Try adju
         {message}
       </div>
     </div>
-    """
+    """)
 
 
 def render_navbar(active_page: str = "Product Overview") -> str:
     """Render a clean, Apple-styled top navigation bar."""
-    return f"""
+    return textwrap.dedent(f"""
     <div class="apple-navbar">
       <div class="apple-navbar-brand">
         <span style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg, #0071E3 0%, #5856D6 100%); color: white; font-size: 14px;">📡</span>
@@ -1156,12 +1158,12 @@ def render_navbar(active_page: str = "Product Overview") -> str:
         <span class="apple-badge apple-badge-green" style="font-size: 10px; padding: 3px 8px;">● Live Stream Active</span>
       </div>
     </div>
-    """
+    """)
 
 
 def render_return_banner(current_view: str) -> str:
     """Render a clean Apple-style breadcrumb indicating location and return route."""
-    return f"""
+    return textwrap.dedent(f"""
     <div class="apple-breadcrumb-bar">
       <div style="display: flex; align-items: center; gap: 8px;">
         <span style="color: var(--apple-text-tertiary);">VoicePulse AI</span>
@@ -1174,12 +1176,12 @@ def render_return_banner(current_view: str) -> str:
         Use sidebar or button below to return to Product Overview
       </div>
     </div>
-    """
+    """)
 
 
 def render_footer() -> str:
     """Render a clean, minimal Apple-style footer."""
-    return """
+    return textwrap.dedent("""
     <div class="apple-footer">
       <div>
         <strong style="color: var(--apple-text-primary);">VoicePulse AI</strong> · Voice-of-Store Operational Intelligence
@@ -1193,47 +1195,4 @@ def render_footer() -> str:
         <span class="apple-badge apple-badge-blue">Official Evaluator Benchmark: 0.8641</span>
       </div>
     </div>
-    """
-
-
-def render_distribution_card(title: str, items: list[dict], subtitle: str | None = None) -> str:
-    """Render an Apple-style horizontal proportional distribution card."""
-    items_html = []
-    for it in items:
-        label = it.get("label", "")
-        count = it.get("count", 0)
-        pct = it.get("pct", 0.0)
-        color = it.get("color", "var(--apple-blue)")
-        icon = it.get("icon", "●")
-        count_str = f"{count:,}" if isinstance(count, (int, float)) else str(count)
-        pct_str = f"{pct * 100:.1f}%" if pct <= 1.0 else f"{pct:.1f}%"
-        bar_width = min(100.0, max(0.0, pct * 100 if pct <= 1.0 else pct))
-
-        items_html.append(f"""
-        <div class="apple-dist-item">
-          <div class="apple-dist-header">
-            <div class="apple-dist-label">
-              <span>{icon}</span>
-              <span>{label}</span>
-            </div>
-            <div class="apple-dist-values">
-              <strong>{count_str}</strong>
-              <span class="apple-badge apple-badge-gray" style="font-size: 10px; padding: 1px 6px;">{pct_str}</span>
-            </div>
-          </div>
-          <div class="apple-dist-bar-bg">
-            <div class="apple-dist-bar-fill" style="width: {bar_width}%; background-color: {color};"></div>
-          </div>
-        </div>
-        """)
-
-    subtitle_html = f'<div style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 12px;">{subtitle}</div>' if subtitle else ""
-    return f"""
-    <div style="background: var(--apple-surface); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-md); padding: 18px 22px; box-shadow: var(--apple-shadow-card); margin-bottom: 14px;">
-      <div style="font-size: 15px; font-weight: 600; color: var(--apple-text-primary); margin-bottom: 4px;">{title}</div>
-      {subtitle_html}
-      <div class="apple-dist-list">
-        {"".join(items_html)}
-      </div>
-    </div>
-    """
+    """)
