@@ -72,3 +72,8 @@ slide_renders/
 
 # Nested archives
 *.zip
+
+# Frontend & JavaScript dependencies/builds
+node_modules/
+.next/
+

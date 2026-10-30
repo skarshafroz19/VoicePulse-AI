@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import FeatureUnion
 
 POLICY_HIGH_SEVERITY_ISSUES = {
     "IT04",  # Staff misconduct (abusive, harassment, cheating)
@@ -83,24 +84,27 @@ def resolve_store_ids(
 class VoicePulseClassifier:
     """
     Multilingual text classifier trained on official feedback_labels_train.csv.
+    Uses a hybrid Word + Subword FeatureUnion with policy-first statutory floors.
     Predicts issue_type_id (33 classes), severity, and actionable flag.
     """
 
     def __init__(self) -> None:
-        self.vec = TfidfVectorizer(
-            ngram_range=(1, 2),
-            min_df=2,
-            sublinear_tf=True
-        )
-        self.clf_issue = LogisticRegression(C=3.0, max_iter=1000, random_state=42)
-        self.clf_sev = LogisticRegression(C=2.0, max_iter=1000, random_state=42)
-        self.clf_act = LogisticRegression(C=2.0, max_iter=1000, random_state=42)
+        self.clf_issue = LogisticRegression(C=3.5, max_iter=1000, random_state=42)
+        self.clf_sev = LogisticRegression(C=2.5, max_iter=1000, random_state=42)
+        self.clf_act = LogisticRegression(C=2.5, max_iter=1000, random_state=42)
+        self.vec: FeatureUnion | None = None
         self.is_fitted = False
         self.floor_map: dict[str, str] = {}
 
     def fit(self, train_df: pd.DataFrame, taxonomy_df: pd.DataFrame | None = None) -> VoicePulseClassifier:
         """Fit classifiers on labeled training data (feedback_id, issue_type_id, severity, actionable, text)."""
         texts = train_df["text"].map(normalise_text)
+        word_min_df = 2 if len(train_df) > 50 else 1
+        char_min_df = 3 if len(train_df) > 50 else 1
+        self.vec = FeatureUnion([
+            ("word", TfidfVectorizer(ngram_range=(1, 2), min_df=word_min_df, sublinear_tf=True)),
+            ("char", TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 5), min_df=char_min_df, sublinear_tf=True)),
+        ])
         X = self.vec.fit_transform(texts)
 
         self.clf_issue.fit(X, train_df["issue_type_id"])
