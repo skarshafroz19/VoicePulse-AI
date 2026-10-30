@@ -384,6 +384,20 @@ p, span, label, div {
 
 def render_header(total_records=0, active_source="Synthetic 40k Benchmark"):
     """Render Apple-styled application header with metadata chips."""
+    is_numeric = False
+    if isinstance(total_records, (int, float)):
+        records_str = f"{int(total_records):,}"
+        is_numeric = True
+    else:
+        try:
+            cleaned = str(total_records).replace(",", "").strip()
+            records_str = f"{int(float(cleaned)):,}"
+            is_numeric = True
+        except (ValueError, TypeError):
+            records_str = str(total_records) if total_records is not None else "0"
+
+    record_badge = f"{records_str} Records Live" if is_numeric else records_str
+
     return f"""
     <div class="apple-header-bar">
       <div class="apple-header-left">
@@ -395,7 +409,7 @@ def render_header(total_records=0, active_source="Synthetic 40k Benchmark"):
       </div>
       <div class="apple-header-tags">
         <span class="apple-badge apple-badge-blue">Dataset: {active_source}</span>
-        <span class="apple-badge apple-badge-green">{total_records:,} Records Live</span>
+        <span class="apple-badge apple-badge-green">{record_badge}</span>
         <span class="apple-badge apple-badge-gray">31-Class Taxonomy</span>
         <span class="apple-badge apple-badge-gray">Apple HIG System</span>
       </div>
