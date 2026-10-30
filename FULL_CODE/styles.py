@@ -781,6 +781,111 @@ p, span, label, div {
   line-height: 1.5;
   color: var(--apple-text-primary);
 }
+
+/* Navigation Bar */
+.apple-navbar {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--apple-radius-pill);
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.apple-navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--apple-text-primary);
+}
+
+.apple-navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.apple-nav-link {
+  font-size: 13px;
+  color: var(--apple-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* Return Breadcrumb Bar */
+.apple-breadcrumb-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--apple-surface);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--apple-radius-sm);
+  padding: 8px 16px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+}
+
+/* Value Proposition Cards */
+.apple-value-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.apple-value-card {
+  background: var(--apple-surface);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--apple-radius-md);
+  padding: 20px 22px;
+  box-shadow: var(--apple-shadow-card);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.apple-value-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--apple-shadow-hover);
+}
+
+/* Footer */
+.apple-footer {
+  margin-top: 48px;
+  padding: 24px 0 16px 0;
+  border-top: 1px solid var(--apple-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+}
+
+/* Responsive Overrides */
+@media (max-width: 900px) {
+  .apple-hero-headline {
+    font-size: 28px !important;
+  }
+  .apple-value-grid {
+    grid-template-columns: 1fr;
+  }
+  .apple-mini-stats {
+    grid-template-columns: 1fr;
+  }
+  .apple-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .apple-navbar-links {
+    display: none;
+  }
+}
 </style>
 """
 
@@ -976,6 +1081,65 @@ def render_empty_state(title: str = "No Records Found", message: str = "Try adju
       <div style="font-size: 15px; font-weight: 600; color: var(--apple-text-primary);">{title}</div>
       <div style="font-size: 13px; color: var(--apple-text-secondary); margin-top: 4px; max-width: 400px; margin-left: auto; margin-right: auto;">
         {message}
+      </div>
+    </div>
+    """
+
+
+def render_navbar(active_page: str = "Product Overview") -> str:
+    """Render a clean, Apple-styled top navigation bar."""
+    return f"""
+    <div class="apple-navbar">
+      <div class="apple-navbar-brand">
+        <span style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg, #0071E3 0%, #5856D6 100%); color: white; font-size: 14px;">📡</span>
+        <span>VoicePulse AI</span>
+        <span class="apple-badge apple-badge-blue" style="font-size: 10px; padding: 2px 8px; margin-left: 6px;">Enterprise SaaS</span>
+      </div>
+      <div class="apple-navbar-links">
+        <span class="apple-nav-link {'active' if active_page == 'Product Overview' else ''}">Overview</span>
+        <span class="apple-nav-link">Capabilities</span>
+        <span class="apple-nav-link">Workflow</span>
+        <span class="apple-nav-link">Evaluation</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="apple-badge apple-badge-green" style="font-size: 10px; padding: 3px 8px;">● Live Stream Active</span>
+      </div>
+    </div>
+    """
+
+
+def render_return_banner(current_view: str) -> str:
+    """Render a clean Apple-style breadcrumb indicating location and return route."""
+    return f"""
+    <div class="apple-breadcrumb-bar">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="color: var(--apple-text-tertiary);">VoicePulse AI</span>
+        <span style="color: var(--apple-text-tertiary);">›</span>
+        <span style="color: var(--apple-text-secondary);">Enterprise Operations</span>
+        <span style="color: var(--apple-text-tertiary);">›</span>
+        <strong style="color: var(--apple-text-primary);">{current_view}</strong>
+      </div>
+      <div style="font-size: 11px; color: var(--apple-text-secondary);">
+        Use sidebar or button below to return to Product Overview
+      </div>
+    </div>
+    """
+
+
+def render_footer() -> str:
+    """Render a clean, minimal Apple-style footer."""
+    return """
+    <div class="apple-footer">
+      <div>
+        <strong style="color: var(--apple-text-primary);">VoicePulse AI</strong> · Voice-of-Store Operational Intelligence
+        <div style="margin-top: 4px; color: var(--apple-text-secondary);">
+          TalentAP Mega Hackathon 2026 · Retail Track Problem Statement R5 · Team Byteforce (TEAM-001073)
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span class="apple-badge apple-badge-gray">39,769 Chatter Records</span>
+        <span class="apple-badge apple-badge-gray">31 Issue Taxonomy</span>
+        <span class="apple-badge apple-badge-blue">Official Evaluator Benchmark: 0.8641</span>
       </div>
     </div>
     """

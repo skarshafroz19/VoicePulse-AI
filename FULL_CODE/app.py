@@ -27,8 +27,11 @@ from styles import (
     APPLE_CSS,
     render_dashboard_preview,
     render_empty_state,
+    render_footer,
     render_header,
     render_jury_banner,
+    render_navbar,
+    render_return_banner,
     render_section_banner,
     render_seeded_incident_card,
 )
@@ -548,6 +551,9 @@ if st.session_state.jury_demo_mode:
 
 # --- VIEW 0: PRODUCT OVERVIEW (LANDING PAGE) ---
 if selected_nav == "Product Overview":
+    # Top Navigation Bar
+    st.markdown(render_navbar(active_page="Product Overview"), unsafe_allow_html=True)
+
     # Hero Section
     st.markdown("""
     <div class="apple-hero-container">
@@ -555,25 +561,28 @@ if selected_nav == "Product Overview":
             TalentAP Mega Hackathon 2026 · Retail Track R5
         </div>
         <div class="apple-hero-headline">
-            Turn Every Store Conversation<br>Into Operational Action.
+            Every Conversation Has a Signal.
         </div>
         <div class="apple-hero-description">
-            VoicePulse AI ingests 40,000 raw, multilingual customer chatter records across in-store kiosks, WhatsApp, Google reviews, and staff notes.
-            Using a neural-symbolic classifier with statutory safety floors, it routes actionable tickets to department owners and detects emerging store-level outbreaks 2–3 weeks ahead of batch review.
+            VoicePulse AI turns raw, multi-channel store conversations into structured operational insights—routing frontline tickets to department owners, enforcing statutory safety floors, and surfacing emerging incidents 2 weeks before conventional reviews.
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     # Hero Action Buttons & Trust Indicators
-    h_col1, h_col2, h_col3 = st.columns([1.2, 1.2, 2.6])
+    h_col1, h_col2, h_col3 = st.columns([1.3, 1.3, 1.4])
     with h_col1:
-        if st.button("Start Guided Jury Demo", type="primary", use_container_width=True, key="hero_start_demo"):
+        if st.button("Explore VoicePulse AI →", type="primary", use_container_width=True, key="hero_explore_dash"):
+            st.session_state.nav_choice = "Executive Overview"
+            st.rerun()
+    with h_col2:
+        if st.button("Start Guided Jury Demo", type="secondary", use_container_width=True, key="hero_start_demo"):
             st.session_state.jury_demo_mode = True
             st.session_state.jury_demo_step = 1
             st.rerun()
-    with h_col2:
-        if st.button("Explore Dashboard →", type="secondary", use_container_width=True, key="hero_explore_dash"):
-            st.session_state.nav_choice = "Executive Overview"
+    with h_col3:
+        if st.button("Test Live AI Triage ⚡", use_container_width=True, key="hero_test_ai_btn"):
+            st.session_state.nav_choice = "Live AI Analysis"
             st.rerun()
 
     st.markdown("""
@@ -605,6 +614,29 @@ if selected_nav == "Product Overview":
             st.metric("Actionable Tickets", f"{actionable_count:,}", f"{act_share:.1f}% Routed to Owners")
             st.metric("Statutory Safety Incidents", f"{high_critical_count:,}", "Immediate Floor Escalations")
             st.metric("Cross-Channel Duplicates", f"{duplicate_count:,}", "Same-Day Store Clustered")
+
+    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+
+    # Product Value Proposition: Why VoicePulse AI Wins
+    st.markdown("### Why Standard Dashboards Fail vs. How VoicePulse AI Wins")
+    st.caption("Traditional retail operations rely on monthly batch reports or generic sentiment. VoicePulse AI delivers closed-loop operational precision.")
+
+    v1, v2, v3 = st.columns(3)
+    with v1, st.container(border=True):
+        st.markdown("<div style='font-size: 24px; margin-bottom: 8px;'>📍</div>", unsafe_allow_html=True)
+        st.markdown("**1. Locality Resolution**")
+        st.markdown("Frontline chatter rarely specifies exact store IDs. Our regex boundary locality resolver cross-references text cues ('kothrud market') with store metadata to correctly attribute complaints.")
+        st.caption("Eliminates unassigned tickets")
+    with v2, st.container(border=True):
+        st.markdown("<div style='font-size: 24px; margin-bottom: 8px;'>⚖️</div>", unsafe_allow_html=True)
+        st.markdown("**2. Statutory Legal Safeguards**")
+        st.markdown("Generic ML treats food poisoning or broken chillers as standard complaints. VoicePulse enforces deterministic policy floors, instantly elevating IT17, IT10, and IT06 issues to Critical.")
+        st.caption("Zero-tolerance regulatory compliance")
+    with v3, st.container(border=True):
+        st.markdown("<div style='font-size: 24px; margin-bottom: 8px;'>📡</div>", unsafe_allow_html=True)
+        st.markdown("**3. Causal Anomaly Radar**")
+        st.markdown("Rolling 8-week exposure-normalized z-score baseline flags localized micro-outbreaks +2 weeks before naive threshold alerts without exceeding weekly flood constraints.")
+        st.caption("+2 Weeks Lead Advantage (Score 0.6667)")
 
     st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
 
@@ -738,13 +770,30 @@ if selected_nav == "Product Overview":
             st.session_state.jury_demo_step = 1
             st.rerun()
     with cta_b2:
-        if st.button("Launch Operational Dashboard →", type="secondary", use_container_width=True, key="bottom_explore_dash"):
+        if st.button("Explore VoicePulse AI →", type="secondary", use_container_width=True, key="bottom_explore_dash"):
             st.session_state.nav_choice = "Executive Overview"
             st.rerun()
+
+    # Footer
+    st.markdown(render_footer(), unsafe_allow_html=True)
 
 
 # --- VIEW 1: EXECUTIVE OVERVIEW ---
 elif selected_nav in ["Executive Overview", "Complete Unified View"]:
+    # Return Breadcrumb & Quick Actions
+    st.markdown(render_return_banner("Executive Operational Overview"), unsafe_allow_html=True)
+    r_col1, r_col2, _ = st.columns([1.6, 1.8, 3.2])
+    with r_col1:
+        if st.button("← Back to Product Overview", key="back_overview_exec"):
+            st.session_state.nav_choice = "Product Overview"
+            st.rerun()
+    with r_col2:
+        if not st.session_state.jury_demo_mode:
+            if st.button("Start Guided Jury Demo", key="demo_btn_exec"):
+                st.session_state.jury_demo_mode = True
+                st.session_state.jury_demo_step = 1
+                st.rerun()
+
     st.markdown(render_section_banner(
         title="Executive Operational Overview",
         subtitle="Enterprise-wide chatter stream metrics, statutory compliance escalations, and channel ingestion mix.",
@@ -771,6 +820,9 @@ elif selected_nav in ["Executive Overview", "Complete Unified View"]:
             ch_dist.columns = ["Channel", "Records"]
             ch_dist["Share"] = (ch_dist["Records"] / max(1, total_records)).round(3)
             st.dataframe(ch_dist, width="stretch", hide_index=True)
+            # Visual Bar Distribution
+            ch_chart_data = scored_df["channel"].value_counts()
+            st.bar_chart(ch_chart_data, height=180)
 
     with d_col2, st.container(border=True):
         st.markdown("**Owning Function Allocation**")
@@ -778,6 +830,9 @@ elif selected_nav in ["Executive Overview", "Complete Unified View"]:
         owner_dist.columns = ["Owning Function", "Assigned Tickets"]
         owner_dist["Share"] = (owner_dist["Assigned Tickets"] / max(1, total_records)).round(3)
         st.dataframe(owner_dist, width="stretch", hide_index=True)
+        # Visual Function Allocation
+        fn_chart_data = scored_df[scored_df["owner_function"] != "None (not actionable)"]["owner_function"].value_counts()
+        st.bar_chart(fn_chart_data, height=180)
 
     # Key Findings & Recent Stream
     with st.container(border=True):
@@ -795,9 +850,25 @@ elif selected_nav in ["Executive Overview", "Complete Unified View"]:
             hide_index=True
         )
 
+    st.markdown(render_footer(), unsafe_allow_html=True)
+
 
 # --- VIEW 2: LIVE AI ANALYSIS ---
 elif selected_nav in ["Live AI Analysis", "Complete Unified View"]:
+    # Return Breadcrumb & Quick Actions
+    st.markdown(render_return_banner("Live AI Analysis"), unsafe_allow_html=True)
+    r_col1, r_col2, _ = st.columns([1.6, 1.8, 3.2])
+    with r_col1:
+        if st.button("← Back to Product Overview", key="back_overview_ai"):
+            st.session_state.nav_choice = "Product Overview"
+            st.rerun()
+    with r_col2:
+        if not st.session_state.jury_demo_mode:
+            if st.button("Start Guided Jury Demo", key="demo_btn_ai"):
+                st.session_state.jury_demo_mode = True
+                st.session_state.jury_demo_step = 1
+                st.rerun()
+
     st.markdown(render_section_banner(
         title="Live AI Voice-of-Store Triage",
         subtitle="Real-time inference pipeline evaluating text, assigning 31-class taxonomy, and enforcing statutory severity floors.",
@@ -882,9 +953,25 @@ elif selected_nav in ["Live AI Analysis", "Complete Unified View"]:
                 </div>
                 """, unsafe_allow_html=True)
 
+    st.markdown(render_footer(), unsafe_allow_html=True)
+
 
 # --- VIEW 3: DATA EXPLORER ---
 elif selected_nav in ["Data Explorer", "Complete Unified View"]:
+    # Return Breadcrumb & Quick Actions
+    st.markdown(render_return_banner("Feedback Data Explorer"), unsafe_allow_html=True)
+    r_col1, r_col2, _ = st.columns([1.6, 1.8, 3.2])
+    with r_col1:
+        if st.button("← Back to Product Overview", key="back_overview_de"):
+            st.session_state.nav_choice = "Product Overview"
+            st.rerun()
+    with r_col2:
+        if not st.session_state.jury_demo_mode:
+            if st.button("Start Guided Jury Demo", key="demo_btn_de"):
+                st.session_state.jury_demo_mode = True
+                st.session_state.jury_demo_step = 1
+                st.rerun()
+
     st.markdown(render_section_banner(
         title="Interactive Feedback Data Explorer",
         subtitle="Search, filter, and audit store feedback records with real-time responsive analytics.",
@@ -953,9 +1040,54 @@ elif selected_nav in ["Data Explorer", "Complete Unified View"]:
             hide_index=True
         )
 
+        with st.expander("Inspect Single Feedback Record in Detail", expanded=False):
+            rec_options = view_df["feedback_id"].head(50).tolist()
+            if rec_options:
+                sel_rec_id = st.selectbox("Select Feedback ID", rec_options, key="de_sel_rec_id")
+                rec_match = view_df[view_df["feedback_id"] == sel_rec_id]
+                if not rec_match.empty:
+                    rec_row = rec_match.iloc[0]
+                    st.markdown(f"""
+                    <div class="apple-incident-card" style="border-left-color: var(--apple-blue);">
+                        <div class="apple-incident-meta">
+                            <span class="apple-badge apple-badge-blue">{rec_row['feedback_id']}</span>
+                            <span class="apple-badge apple-badge-gray">{rec_row.get('channel', 'Unknown')}</span>
+                            <span class="apple-badge apple-badge-gray">Store: {rec_row.get('resolved_store_id', 'Unknown')}</span>
+                            <span class="apple-badge {'apple-badge-red' if rec_row.get('severity') in ['critical', 'high'] else 'apple-badge-amber' if rec_row.get('severity') == 'medium' else 'apple-badge-gray'}">
+                                Severity: {str(rec_row.get('severity')).upper()}
+                            </span>
+                            <span class="apple-badge {'apple-badge-green' if rec_row.get('actionable') == 1 else 'apple-badge-gray'}">
+                                {'ACTIONABLE' if rec_row.get('actionable') == 1 else 'NON-ACTIONABLE'}
+                            </span>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 600; color: var(--apple-text-primary); margin: 6px 0;">
+                            {rec_row.get('issue_type_id', '')} · {rec_row.get('issue_name', '')} (Owner: {rec_row.get('owner_function', 'Store Ops')})
+                        </div>
+                        <div class="apple-quote">
+                            “{rec_row.get('text', '')}”
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+    st.markdown(render_footer(), unsafe_allow_html=True)
+
 
 # --- VIEW 4: INCIDENT RADAR ---
 elif selected_nav in ["Incident Radar", "Complete Unified View"]:
+    # Return Breadcrumb & Quick Actions
+    st.markdown(render_return_banner("Store-Level Emerging Incident Radar"), unsafe_allow_html=True)
+    r_col1, r_col2, _ = st.columns([1.6, 1.8, 3.2])
+    with r_col1:
+        if st.button("← Back to Product Overview", key="back_overview_ir"):
+            st.session_state.nav_choice = "Product Overview"
+            st.rerun()
+    with r_col2:
+        if not st.session_state.jury_demo_mode:
+            if st.button("Start Guided Jury Demo", key="demo_btn_ir"):
+                st.session_state.jury_demo_mode = True
+                st.session_state.jury_demo_step = 1
+                st.rerun()
+
     st.markdown(render_section_banner(
         title="Store-Level Emerging Incident Radar",
         subtitle="Causal multi-week anomaly radar flagging store micro-trends up to 2-3 weeks ahead of batch review.",
@@ -997,9 +1129,25 @@ elif selected_nav in ["Incident Radar", "Complete Unified View"]:
         alert_level="CRITICAL"
     ), unsafe_allow_html=True)
 
+    st.markdown(render_footer(), unsafe_allow_html=True)
+
 
 # --- VIEW 5: REGIONAL INTELLIGENCE ---
 elif selected_nav in ["Regional Intelligence", "Complete Unified View"]:
+    # Return Breadcrumb & Quick Actions
+    st.markdown(render_return_banner("Regional Operational Intelligence"), unsafe_allow_html=True)
+    r_col1, r_col2, _ = st.columns([1.6, 1.8, 3.2])
+    with r_col1:
+        if st.button("← Back to Product Overview", key="back_overview_ri"):
+            st.session_state.nav_choice = "Product Overview"
+            st.rerun()
+    with r_col2:
+        if not st.session_state.jury_demo_mode:
+            if st.button("Start Guided Jury Demo", key="demo_btn_ri"):
+                st.session_state.jury_demo_mode = True
+                st.session_state.jury_demo_step = 1
+                st.rerun()
+
     st.markdown(render_section_banner(
         title="Regional Weekly Operational Briefs",
         subtitle="Executive one-page briefs summarizing top 5 issues, trends vs prior week, affected stores, and verbatim evidence.",
@@ -1032,10 +1180,33 @@ elif selected_nav in ["Regional Intelligence", "Complete Unified View"]:
 
     with st.container(border=True):
         st.markdown(brief_markdown)
+        st.download_button(
+            f"Download {sel_region} Region Action Brief (.md)",
+            brief_markdown.encode("utf-8"),
+            file_name=f"regional_brief_{sel_region.lower()}_{sel_week}.md",
+            mime="text/markdown",
+            use_container_width=True
+        )
+
+    st.markdown(render_footer(), unsafe_allow_html=True)
 
 
 # --- VIEW 6: MODEL INSIGHTS & BENCHMARKS ---
 elif selected_nav in ["Model Insights & Benchmarks", "Complete Unified View"]:
+    # Return Breadcrumb & Quick Actions
+    st.markdown(render_return_banner("Model Insights & Benchmarks"), unsafe_allow_html=True)
+    r_col1, r_col2, _ = st.columns([1.6, 1.8, 3.2])
+    with r_col1:
+        if st.button("← Back to Product Overview", key="back_overview_mi"):
+            st.session_state.nav_choice = "Product Overview"
+            st.rerun()
+    with r_col2:
+        if not st.session_state.jury_demo_mode:
+            if st.button("Start Guided Jury Demo", key="demo_btn_mi"):
+                st.session_state.jury_demo_mode = True
+                st.session_state.jury_demo_step = 1
+                st.rerun()
+
     st.markdown(render_section_banner(
         title="Model Insights, Benchmarks & Limitations",
         subtitle="Detailed breakdown of offline ground-truth evaluation, 5-fold cross-validation, and production considerations.",
@@ -1072,9 +1243,25 @@ elif selected_nav in ["Model Insights & Benchmarks", "Complete Unified View"]:
     with st.expander("Explore 31-Class Retail Issue Taxonomy", expanded=False):
         st.dataframe(taxonomy_df, width="stretch", hide_index=True)
 
+    st.markdown(render_footer(), unsafe_allow_html=True)
 
-# --- VIEW 7: REPORTS & EXPORTS ---
-elif selected_nav in ["Reports & Exports", "Complete Unified View"]:
+
+# --- VIEW 7: REPORTS & DELIVERABLES ---
+elif selected_nav in ["Reports & Deliverables", "Reports & Exports", "Complete Unified View"]:
+    # Return Breadcrumb & Quick Actions
+    st.markdown(render_return_banner("Reports & Deliverables"), unsafe_allow_html=True)
+    r_col1, r_col2, _ = st.columns([1.6, 1.8, 3.2])
+    with r_col1:
+        if st.button("← Back to Product Overview", key="back_overview_rd"):
+            st.session_state.nav_choice = "Product Overview"
+            st.rerun()
+    with r_col2:
+        if not st.session_state.jury_demo_mode:
+            if st.button("Start Guided Jury Demo", key="demo_btn_rd"):
+                st.session_state.jury_demo_mode = True
+                st.session_state.jury_demo_step = 1
+                st.rerun()
+
     st.markdown(render_section_banner(
         title="Reports, Benchmarks & Deliverables",
         subtitle="Official submission artifacts for Retail Track R5 evaluation.",
@@ -1112,3 +1299,5 @@ elif selected_nav in ["Reports & Exports", "Complete Unified View"]:
 - **Primary Hackathon Score:** 0.8641
 """
         st.download_button("Download Benchmark Report", eval_report_text.encode("utf-8"), "official_benchmark_summary.md", "text/markdown", use_container_width=True)
+
+    st.markdown(render_footer(), unsafe_allow_html=True)

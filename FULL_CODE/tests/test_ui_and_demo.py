@@ -1,7 +1,16 @@
 import unittest
 import pandas as pd
 from engine import VoicePulseClassifier, build_regional_weekly_brief
-from styles import render_header, render_jury_banner, render_section_banner, render_empty_state, render_dashboard_preview
+from styles import (
+    render_header,
+    render_jury_banner,
+    render_section_banner,
+    render_empty_state,
+    render_dashboard_preview,
+    render_navbar,
+    render_return_banner,
+    render_footer,
+)
 
 
 class TestUIAndDemo(unittest.TestCase):
@@ -42,6 +51,19 @@ class TestUIAndDemo(unittest.TestCase):
         self.assertIn("apple-mockup-frame", preview)
         self.assertIn("39,769", preview)
         self.assertIn("+2 Wks Early Lead", preview)
+
+    def test_render_navbar_return_and_footer(self):
+        nav = render_navbar("Product Overview")
+        self.assertIn("VoicePulse AI", nav)
+        self.assertIn("Enterprise SaaS", nav)
+
+        ret = render_return_banner("Executive Operational Overview")
+        self.assertIn("Executive Operational Overview", ret)
+        self.assertIn("Product Overview", ret)
+
+        ft = render_footer()
+        self.assertIn("VoicePulse AI", ft)
+        self.assertIn("0.8641", ft)
 
     def test_classifier_predict_detailed(self):
         clf = VoicePulseClassifier()
