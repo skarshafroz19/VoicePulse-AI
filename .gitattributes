@@ -1,0 +1,9 @@
+# Ensure consistent LF line endings across Windows, Linux, and macOS
+* text=auto eol=lf
+*.py text eol=lf
+*.csv text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.example text eol=lf
+.gitignore text eol=lf
+LICENSE text eol=lf
